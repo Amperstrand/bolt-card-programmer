@@ -68,7 +68,6 @@ export default function ReadNFCScreen() {
 
             setCardUID(tag.id);
             const key0Version = await Ntag424.getKeyVersion("00");
-            // console.log('key0', key0Version);
             setKey0Changed("Key 0 version: " + key0Version);
             const key1Version = await Ntag424.getKeyVersion("01");
             setKey1Changed("Key 1 version: " + key1Version);
@@ -80,10 +79,10 @@ export default function ReadNFCScreen() {
             setKey4Changed("Key 4 version: " + key4Version);
         } catch (ex) {
             console.warn("Oops!", ex);
-            var error = ex;
-            if (typeof ex === "object") {
-                error = "NFC Error: " + (ex.message ? ex.message : ex.constructor.name);
-            }
+            let error: string =
+                typeof ex === "object" && ex !== null
+                    ? "NFC Error: " + ((ex as Error).message ?? (ex as Error).constructor?.name ?? String(ex))
+                    : String(ex);
             setReadError(error);
         } finally {
             // stop the nfc scanning

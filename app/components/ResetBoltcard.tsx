@@ -58,7 +58,7 @@ export default function SetupBoltcard({ url }: any) {
     const readNfc = async () => {
         reset();
         setStep(SetupStep.HoldCard);
-        var result = [];
+        let result: string[] = [];
         try {
             setReadingNfc(true);
             await nfcManager.requestTechnology(NfcTech.IsoDep, {
@@ -106,7 +106,7 @@ export default function SetupBoltcard({ url }: any) {
             setStep(SetupStep.WritingCard);
 
             const defaultKey = "00000000000000000000000000000000";
-            // //auth first
+            // auth first
             await Ntag424.AuthEv2First("00", K0);
 
             //reset file settings
@@ -133,10 +133,10 @@ export default function SetupBoltcard({ url }: any) {
             result.push("NDEF and SUN/SDM cleared");
         } catch (ex) {
             console.error("Oops!", ex);
-            var error = ex;
-            if (typeof ex === "object") {
-                error = ex.message ? ex.message : ex.constructor.name;
-            }
+            let error: string =
+                typeof ex === "object" && ex !== null
+                    ? (ex as Error).message ?? (ex as Error).constructor?.name ?? String(ex)
+                    : String(ex);
             if (
                 error == "You can only issue one request at a time" ||
                 error == "UserCancel" ||

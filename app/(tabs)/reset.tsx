@@ -63,7 +63,7 @@ export default function ResetKeysScreen() {
     const enableResetMode = async () => {
         setResetNow(true);
         setWriteKeysOutput(null);
-        var result: any = [];
+        let result: string[] = [];
         try {
             // register for the NFC tag with NDEF in it
             await NfcManager.requestTechnology(NfcTech.IsoDep, {
@@ -72,7 +72,7 @@ export default function ResetKeysScreen() {
 
             const defaultKey = "00000000000000000000000000000000";
 
-            // //auth first
+            // auth first
             await Ntag424.AuthEv2First("00", key0);
 
             //reset file settings
@@ -99,17 +99,16 @@ export default function ResetKeysScreen() {
             result.push("NDEF and SUN/SDM cleared");
         } catch (ex) {
             console.error("Oops!", ex, ex.constructor.name);
-            var error = ex;
-            if (typeof ex === "object") {
-                error = "NFC Error: " + (ex.message ? ex.message : ex.constructor.name);
-            }
+            let error: string =
+                typeof ex === "object" && ex !== null
+                    ? "NFC Error: " + ((ex as Error).message ?? (ex as Error).constructor?.name ?? String(ex))
+                    : String(ex);
             result.push(error);
             setWriteKeysOutput(error);
         } finally {
             // stop the nfc scanning
             NfcManager.cancelTechnologyRequest();
             setWriteKeysOutput(result.join("\r\n"));
-            // setResetNow(false);
         }
     };
 

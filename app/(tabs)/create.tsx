@@ -78,7 +78,6 @@ export default function CreateBoltcardScreen() {
     const writeAgain = async () => {
         resetOutput();
         console.log(keys);
-        // NativeModules.MyReactModule.setCardMode('createBoltcard');
         setWriteMode(true);
         try {
             // register for the NFC tag with NDEF in it
@@ -98,7 +97,7 @@ export default function CreateBoltcardScreen() {
             setNdefWritten("success");
 
             const key0 = "00000000000000000000000000000000";
-            // //auth first
+            // auth first
             await Ntag424.AuthEv2First("00", key0);
 
             if (privateUID) {
@@ -153,11 +152,11 @@ export default function CreateBoltcardScreen() {
             setNdefMessage.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
                 params[key] = value;
             });
-            if (!"p" in params) {
+            if (!("p" in params)) {
                 setTestp("no p value to test");
                 return;
             }
-            if (!"c" in params) {
+            if (!("c" in params)) {
                 setTestc("no c value to test");
                 return;
             }
@@ -170,10 +169,10 @@ export default function CreateBoltcardScreen() {
             setTestc(testResult.cTest ? "ok" : "decrypt with key failed");
         } catch (ex) {
             console.error("Oops!", ex);
-            var error = ex;
-            if (typeof ex === "object") {
-                error = "NFC Error: " + (ex.message ? ex.message : ex.constructor.name);
-            }
+            let error: string =
+                typeof ex === "object" && ex !== null
+                    ? "NFC Error: " + ((ex as Error).message ?? (ex as Error).constructor?.name ?? String(ex))
+                    : String(ex);
             setTagTypeError(error);
         } finally {
             // stop the nfc scanning

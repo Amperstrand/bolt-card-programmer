@@ -151,7 +151,7 @@ export default function SetupBoltcard({ url }: any) {
             await Ntag424.setNdefMessage(bytes);
             setNdefWritten(true);
 
-            // //auth first
+            // auth first
             await Ntag424.AuthEv2First("00", key0);
             if (privateUID) {
                 await Ntag424.setPrivateUid();
@@ -180,7 +180,7 @@ export default function SetupBoltcard({ url }: any) {
             setWriteKeys("success");
 
             //set offset for ndef header
-            var ndef = await Ntag424.readData("060000");
+            let ndef = await Ntag424.readData("060000");
             while (ndef[ndef.length - 1] === 0) {
                 //Remomving trailing 0s
                 //@TODO: need to figure out why there are trailing 0s in ndef
@@ -230,10 +230,10 @@ export default function SetupBoltcard({ url }: any) {
             setTestc(testResult.cTest ? "ok" : "decrypt with key failed");
         } catch (ex) {
             console.error("Oops!", ex);
-            var error = ex;
-            if (typeof ex === "object") {
-                error = ex.message ? ex.message : ex.constructor.name;
-            }
+            let error: string =
+                typeof ex === "object" && ex !== null
+                    ? (ex as Error).message ?? (ex as Error).constructor?.name ?? String(ex)
+                    : String(ex);
             if (
                 error == "You can only issue one request at a time" ||
                 error == "UserCancel" ||

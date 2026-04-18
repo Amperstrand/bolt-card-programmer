@@ -13,19 +13,6 @@ export default function TestScreen() {
             // the resolved tag object will contain `ndefMessage` property
 
             const { sesAuthMacKey, ti } = await Ntag424.AuthEv2First("00", "00000000000000000000000000000000");
-
-            // const commandMac = CryptoJS.CMAC(CryptoJS.enc.Hex.parse(sesAuthMacKey), CryptoJS.enc.Hex.parse("F50000"+ti+'02'));
-            // const commandMacHex = commandMac.toString();
-            // console.log('commandMacHex', commandMacHex, hexToBytes(commandMacHex));
-            // //truncate to 8 bytes (only get even numbered bytes)
-            // const truncatedMacBytes = hexToBytes(commandMacHex).filter(function(element, index, array) {
-            //   return ((index + 1) % 2 === 0);
-            // });
-            // console.log('truncatedMac', truncatedMacBytes, bytesToHex(truncatedMacBytes));
-
-            // const getFileSettingsHex = "90F500000902" + bytesToHex(truncatedMacBytes) + '00';
-            // const getFileSettingsRes = Platform.OS == 'ios' ? await NfcManager.sendCommandAPDUIOS(hexToBytes(getFileSettingsHex)) : await NfcManager.transceive(hexToBytes(getFileSettingsHex));
-            // console.warn('getFileSettingsRes Result: ', Platform.OS == 'ios' ? bytesToHex([getFileSettingsRes.sw1, getFileSettingsRes.sw2]) : bytesToHex(getFileSettingsRes));
         } catch (ex) {
             console.warn("Oops!", ex);
         } finally {
@@ -196,10 +183,6 @@ export default function TestScreen() {
             const cVal = params["c"].slice(0, 16);
             console.log(ndefMessage, pVal, cVal);
 
-            // const key0 = "00000000000000000000000000000000";
-            // const key1 = "00000000000000000000000000000000";
-            // const key2 = "00000000000000000000000000000000";
-
             const key0 = "11111111111111111111111111111111";
             const key1 = "22222222222222222222222222222222";
             const key2 = "33333333333333333333333333333333";
@@ -227,9 +210,6 @@ export default function TestScreen() {
 
             // await Ntag424.ndefHandler.writeNdefMessage(bytes);
             await Ntag424.setNdefMessage(bytes);
-
-            const testNdef = await NfcManager.ndefHandler.getNdefMessage();
-            console.log("TEST NDEF", Ndef.uri.decodePayload(testNdef.ndefMessage[0].payload));
         } catch (ex) {
             console.warn("Oops!", ex);
         } finally {
@@ -254,7 +234,6 @@ export default function TestScreen() {
                             <Button
                                 title="Write NDEF & Set File Settings"
                                 onPress={() => {
-                                    // setFileSettings("00000000000000000000000000000000", 32, 67);
                                     writeNdefSetFileSettings(
                                         "00000000000000000000000000000000",
                                         "lnurlw://your.domain.com/ln?p=00000000000000000000000000000000&c=0000000000000000"
