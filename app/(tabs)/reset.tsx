@@ -168,12 +168,20 @@ export default function ResetKeysScreen() {
                     <Dialog.Button
                         label="Continue"
                         onPress={() => {
-                            setPromptVisible(false);
-                            setPasteWipeKeysJSON();
-                            navigation.navigate("ResetKeysScreen", {
-                                data: pasteWipeKeysJSON,
-                                timestamp: Date.now(),
-                            });
+                            try {
+                                const parsed = JSON.parse(pasteWipeKeysJSON);
+                                setPromptVisible(false);
+                                router.replace({
+                                    pathname: "/(tabs)/reset",
+                                    params: {
+                                        result: JSON.stringify(parsed),
+                                        timestamp: Date.now().toString(),
+                                    },
+                                });
+                            } catch (e) {
+                                setKeyJsonError("Invalid JSON: " + (e instanceof Error ? e.message : String(e)));
+                                setPromptVisible(false);
+                            }
                         }}
                     />
                 </Dialog.Container>

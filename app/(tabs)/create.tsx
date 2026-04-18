@@ -1,5 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Button, ScrollView, StyleSheet, Text } from "react-native";
@@ -15,7 +14,6 @@ export default function CreateBoltcardScreen() {
     console.log("CreateBoltcardScreen params:", params);
     const { result } = params;
     const data = result ? result.toString() : null;
-    const navigation = useNavigation();
 
     const [promptVisible, setPromptVisible] = useState(false);
     const [pasteUrlValue, setPasteUrlValue] = useState();
