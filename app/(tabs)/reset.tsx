@@ -37,22 +37,28 @@ export default function ResetKeysScreen() {
                 const dataObj = JSON.parse(data);
                 setUid(dataObj.uid);
 
+                const k1 = dataObj.k1 || defaultKey;
                 setKey0(dataObj.k0 || defaultKey);
-                setKey1(dataObj.k1 || defaultKey);
+                setKey1(k1);
                 setKey2(dataObj.k2 || defaultKey);
-                setKey3(dataObj.k3 || defaultKey);
-                setKey4(dataObj.k4 || defaultKey);
-                let error = "";
+                setKey3(dataObj.k3 || k1);
+                setKey4(dataObj.k4 || k1);
+                let warnings = "";
                 if (dataObj.action != "wipe") {
-                    error = "Wipe action not specified, proceed with caution.\r\n";
+                    warnings = "Wipe action not specified, proceed with caution.\r\n";
                 }
                 if (dataObj.version != "1") {
-                    error = error + " Expected version 1, found version: " + dataObj.version + "\r\n";
+                    warnings = warnings + " Expected version 1, found version: " + dataObj.version + "\r\n";
                 }
-                if (!dataObj.k0 || !dataObj.k1 || !dataObj.k2 || !dataObj.k3 || !dataObj.k4) {
-                    error = error + " Some keys missing, proceed with caution";
+                if (!dataObj.k0 || !dataObj.k1 || !dataObj.k2) {
+                    warnings = warnings + " Required keys (k0/k1/k2) missing, proceed with caution";
                 }
-                setKeyJsonError(error);
+                if (!dataObj.k3 || !dataObj.k4) {
+                    warnings = warnings + " Keys k3/k4 missing from JSON — using k1 as fallback.\r\n";
+                }
+                if (warnings) {
+                    setKeyJsonError(warnings);
+                }
             } catch (exceptionVar) {
                 console.log("Error parsing JSON data:", exceptionVar);
                 setKeyJsonError("" + exceptionVar);
@@ -64,33 +70,34 @@ export default function ResetKeysScreen() {
         setResetNow(true);
         setWriteKeysOutput(null);
         let result: string[] = [];
+        let hadError = false;
         try {
-            // register for the NFC tag with NDEF in it
             await NfcManager.requestTechnology(NfcTech.IsoDep, {
                 alertMessage: "Ready to write card. Hold NFC card to phone until all keys are changed.",
             });
 
             const defaultKey = "00000000000000000000000000000000";
 
-            // auth first
             await Ntag424.AuthEv2First("00", key0);
 
-            //reset file settings
             await Ntag424.resetFileSettings();
 
-            //change keys
-            await Ntag424.changeKey("01", key1, defaultKey, "00");
-            result.push("Change Key1: Success");
-            console.log("changekey 2");
-            await Ntag424.changeKey("02", key2, defaultKey, "00");
-            result.push("Change Key2: Success");
-            console.log("changekey 3");
-            await Ntag424.changeKey("03", key3, defaultKey, "00");
-            result.push("Change Key3: Success");
-            await Ntag424.changeKey("04", key4, defaultKey, "00");
-            result.push("Change Key4: Success");
-            await Ntag424.changeKey("00", key0, defaultKey, "00");
-            result = ["Change Key0: Success", ...result];
+            const tryChangeKey = async (keyNo: string, oldKey: string, label: string) => {
+                try {
+                    await Ntag424.changeKey(keyNo, oldKey, defaultKey, "00");
+                    result.push(label + ": Success");
+                } catch (e) {
+                    hadError = true;
+                    const msg = typeof e === "string" ? e : (e as Error).message ?? String(e);
+                    result.push(label + ": FAILED — " + msg);
+                }
+            };
+
+            await tryChangeKey("01", key1, "Key 1");
+            await tryChangeKey("02", key2, "Key 2");
+            await tryChangeKey("03", key3, "Key 3");
+            await tryChangeKey("04", key4, "Key 4");
+            await tryChangeKey("00", key0, "Key 0");
 
             const message = [Ndef.uriRecord("")];
             const bytes = Ndef.encodeMessage(message);
@@ -98,6 +105,7 @@ export default function ResetKeysScreen() {
 
             result.push("NDEF and SUN/SDM cleared");
         } catch (ex) {
+            hadError = true;
             console.error("Oops!", ex, ex.constructor.name);
             let error: string =
                 typeof ex === "object" && ex !== null
@@ -106,9 +114,10 @@ export default function ResetKeysScreen() {
             result.push(error);
             setWriteKeysOutput(error);
         } finally {
-            // stop the nfc scanning
             NfcManager.cancelTechnologyRequest();
-            setWriteKeysOutput(result.join("\r\n"));
+            if (!hadError) {
+                setWriteKeysOutput(result.join("\r\n"));
+            }
         }
     };
 

@@ -93,13 +93,13 @@ export default function SetupBoltcard({ url }: any) {
             }
             const json = await response.json();
             console.log(json);
-            const K0 = json.K0 ? json.K0 : json.k0;
-            const K1 = json.K1 ? json.K1 : json.k1;
-            const K2 = json.K2 ? json.K2 : json.k2;
-            const K3 = json.K3 ? json.K3 : json.k3;
-            const K4 = json.K4 ? json.K4 : json.k4;
-            if (!K0 || !K1 || !K2 || !K3 || !K4) {
-                throw new Error("Error fetching the keys");
+            const K0 = json.K0 || json.k0;
+            const K1 = json.K1 || json.k1;
+            const K2 = json.K2 || json.k2;
+            const K3 = json.K3 || json.k3 || K1;
+            const K4 = json.K4 || json.k4 || K1;
+            if (!K0 || !K1 || !K2) {
+                throw new Error("Error fetching the keys — k0, k1, k2 are required");
             }
 
             setWritingCard(true);
@@ -109,22 +109,23 @@ export default function SetupBoltcard({ url }: any) {
             // auth first
             await Ntag424.AuthEv2First("00", K0);
 
-            //reset file settings
             await Ntag424.resetFileSettings();
 
-            //change keys
-            await Ntag424.changeKey("01", K1, defaultKey, "00");
-            result.push("Change Key1: Success");
-            console.log("changekey 2");
-            await Ntag424.changeKey("02", K2, defaultKey, "00");
-            result.push("Change Key2: Success");
-            console.log("changekey 3");
-            await Ntag424.changeKey("03", K3, defaultKey, "00");
-            result.push("Change Key3: Success");
-            await Ntag424.changeKey("04", K4, defaultKey, "00");
-            result.push("Change Key4: Success");
-            await Ntag424.changeKey("00", K0, defaultKey, "00");
-            result = ["Change Key0: Success", ...result];
+            const tryChangeKey = async (keyNo: string, oldKey: string, label: string) => {
+                try {
+                    await Ntag424.changeKey(keyNo, oldKey, defaultKey, "00");
+                    result.push(label + ": Success");
+                } catch (e) {
+                    const msg = typeof e === "string" ? e : (e as Error).message ?? String(e);
+                    result.push(label + ": FAILED — " + msg);
+                }
+            };
+
+            await tryChangeKey("01", K1, "Key 1");
+            await tryChangeKey("02", K2, "Key 2");
+            await tryChangeKey("03", K3, "Key 3");
+            await tryChangeKey("04", K4, "Key 4");
+            await tryChangeKey("00", K0, "Key 0");
 
             const message = [Ndef.uriRecord("")];
             const bytes = Ndef.encodeMessage(message);
