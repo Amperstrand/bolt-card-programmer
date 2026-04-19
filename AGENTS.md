@@ -229,6 +229,32 @@ These improvements were identified from a three-way comparison against BTCPaySer
    This enables the app to verify a card's authentic response without needing a server round-trip.
    Source: BTCPayServer's `PICCData` class and CMAC validation.
 
+### Critical bugs found and fixed in Bolty
+
+8. **WriteData chunked offset bug** — The burn loop's WriteData call used a loop
+   variable `offset` to index into the file data buffer, but the WriteData function
+   call itself always defaulted to offset=0 (the 4th parameter was omitted). This
+   caused every 47-byte chunk to overwrite at offset 0, destroying the NDEF NLEN
+   header. The card would return garbage (0x3030 = ASCII "00") on ISO ReadBinary.
+   **Fix**: Pass the loop's `offset` as the 4th argument to WriteData.
+   **Symptom**: ISO ReadBinary returns NLEN=0x3030 (12336) instead of valid NLEN.
+   **Lesson**: Always verify chunked write operations actually target different offsets.
+
+9. **ntag424_ReadData doesn't support authenticated mode** — The library's ReadData
+   uses raw `reader->transceive()` without session/comm_mode parameters. After DESFire
+   auth, the card returns FULL mode responses (encrypted + MAC) that the raw parser
+   treats as plaintext. **Workaround**: Use ISO ReadBinary (ReadNDEFMessage) for files
+   with PLAIN comm mode, or re-authenticate before native ReadData for PLAIN response.
+   **Lesson**: Check if a library function supports authenticated sessions before using
+   it after AuthEV2First.
+
+10. **ISO-DEP desync after failed ISO ReadBinary** — When ISO ReadBinary returns
+    garbage (e.g., from corrupted NDEF), the card's ISO-DEP state machine can become
+    confused. Subsequent ISO SELECT commands return abnormal responses (not 90 00).
+    **Fix**: Re-detect the card (PICC_RequestA + PICC_Select) to reset the ISO-DEP
+    layer before attempting authentication or other operations.
+    **Lesson**: After any unexpected NFC response, re-detect the card before continuing.
+
 ### Reference implementations for comparison
 
 - **BTCPayServer.BoltCardTools**: `/tmp/btcpay-boltcard-tools/` on this machine
