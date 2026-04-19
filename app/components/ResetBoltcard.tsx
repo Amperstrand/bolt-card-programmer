@@ -105,33 +105,59 @@ export default function SetupBoltcard({ url }: any) {
             setWritingCard(true);
             setStep(SetupStep.WritingCard);
 
-            const defaultKey = "00000000000000000000000000000000";
-            // auth first
-            await Ntag424.AuthEv2First("00", K0);
+            const ZEROS = "00000000000000000000000000000000";
 
+            const keySlots = ["00", "01", "02", "03", "04"] as const;
+            const providedKeys = [K0, K1, K2, K3, K4];
+            const actualOldKeys: string[] = [];
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const version = await Ntag424.getKeyVersion(keySlots[i]);
+                    actualOldKeys[i] = version === "00" ? ZEROS : providedKeys[i];
+                    result.push("Key " + i + ": v" + version + (version === "00" ? " (factory)" : ""));
+                } catch {
+                    actualOldKeys[i] = providedKeys[i];
+                    result.push("Key " + i + ": version unknown, using provided key");
+                }
+            }
+
+            const authKey = actualOldKeys[0];
+            await Ntag424.AuthEv2First("00", authKey);
             await Ntag424.resetFileSettings();
 
-            const tryChangeKey = async (keyNo: string, oldKey: string, label: string) => {
+            const tryChangeKey = async (idx: number) => {
+                const keyNo = keySlots[idx];
+                const oldKey = actualOldKeys[idx];
+                const label = "Key " + idx;
+                if (oldKey === ZEROS) {
+                    result.push(label + ": skipped (already factory)");
+                    return;
+                }
                 try {
-                    await Ntag424.changeKey(keyNo, oldKey, defaultKey, "00");
-                    result.push(label + ": Success");
+                    await Ntag424.changeKey(keyNo, oldKey, ZEROS, "00");
+                    result.push(label + ": wiped OK");
                 } catch (e) {
                     const msg = typeof e === "string" ? e : (e as Error).message ?? String(e);
                     result.push(label + ": FAILED — " + msg);
                 }
             };
 
-            await tryChangeKey("01", K1, "Key 1");
-            await tryChangeKey("02", K2, "Key 2");
-            await tryChangeKey("03", K3, "Key 3");
-            await tryChangeKey("04", K4, "Key 4");
-            await tryChangeKey("00", K0, "Key 0");
+            await tryChangeKey(1);
+            await tryChangeKey(2);
+            await tryChangeKey(3);
+            await tryChangeKey(4);
+            await tryChangeKey(0);
 
             const message = [Ndef.uriRecord("")];
             const bytes = Ndef.encodeMessage(message);
-            await Ntag424.setNdefMessage(bytes);
-
-            result.push("NDEF and SUN/SDM cleared");
+            try {
+                await Ntag424.AuthEv2First("00", ZEROS);
+                await Ntag424.setNdefMessage(bytes);
+                result.push("NDEF and SUN/SDM cleared");
+            } catch {
+                result.push("NDEF clear: skipped (auth with zeros failed)");
+            }
         } catch (ex) {
             console.error("Oops!", ex);
             let error: string =

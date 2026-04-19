@@ -69,6 +69,7 @@ export default function ResetKeysScreen() {
     const enableResetMode = async () => {
         setResetNow(true);
         setWriteKeysOutput(null);
+        const ZEROS = "00000000000000000000000000000000";
         let result: string[] = [];
         let hadError = false;
         try {
@@ -76,37 +77,78 @@ export default function ResetKeysScreen() {
                 alertMessage: "Ready to write card. Hold NFC card to phone until all keys are changed.",
             });
 
-            const defaultKey = "00000000000000000000000000000000";
+            await Ntag424.isoSelectFileApplication();
 
-            await Ntag424.AuthEv2First("00", key0);
+            const keySlots = ["00", "01", "02", "03", "04"] as const;
+            const providedKeys = [key0, key1, key2, key3, key4];
+            const actualOldKeys: string[] = [];
+            let changesNeeded = 0;
 
-            await Ntag424.resetFileSettings();
-
-            const tryChangeKey = async (keyNo: string, oldKey: string, label: string) => {
+            for (let i = 0; i < 5; i++) {
                 try {
-                    await Ntag424.changeKey(keyNo, oldKey, defaultKey, "00");
-                    result.push(label + ": Success");
-                } catch (e) {
-                    hadError = true;
-                    const msg = typeof e === "string" ? e : (e as Error).message ?? String(e);
-                    result.push(label + ": FAILED — " + msg);
+                    const version = await Ntag424.getKeyVersion(keySlots[i]);
+                    if (version === "00") {
+                        actualOldKeys[i] = ZEROS;
+                        result.push("Key " + i + ": version 00 (factory) — using zeros");
+                    } else {
+                        actualOldKeys[i] = providedKeys[i];
+                        changesNeeded++;
+                        result.push("Key " + i + ": version " + version + " — using provided key");
+                    }
+                } catch {
+                    actualOldKeys[i] = providedKeys[i];
+                    changesNeeded++;
+                    result.push("Key " + i + ": version unknown — using provided key");
                 }
-            };
+            }
 
-            await tryChangeKey("01", key1, "Key 1");
-            await tryChangeKey("02", key2, "Key 2");
-            await tryChangeKey("03", key3, "Key 3");
-            await tryChangeKey("04", key4, "Key 4");
-            await tryChangeKey("00", key0, "Key 0");
+            if (changesNeeded === 0) {
+                result.push("All keys already at factory defaults — nothing to change.");
+                result.push("Clearing NDEF only...");
+            } else {
+                const authKey = actualOldKeys[0];
+                await Ntag424.AuthEv2First("00", authKey);
+                await Ntag424.resetFileSettings();
+
+                const tryChangeKey = async (idx: number) => {
+                    const keyNo = keySlots[idx];
+                    const oldKey = actualOldKeys[idx];
+                    const label = "Key " + idx;
+                    if (oldKey === ZEROS) {
+                        result.push(label + ": skipped (already factory)");
+                        return;
+                    }
+                    try {
+                        await Ntag424.changeKey(keyNo, oldKey, ZEROS, "00");
+                        result.push(label + ": wiped OK");
+                    } catch (e) {
+                        hadError = true;
+                        const msg = typeof e === "string" ? e : (e as Error).message ?? String(e);
+                        result.push(label + ": FAILED — " + msg);
+                    }
+                };
+
+                await tryChangeKey(1);
+                await tryChangeKey(2);
+                await tryChangeKey(3);
+                await tryChangeKey(4);
+                await tryChangeKey(0);
+            }
 
             const message = [Ndef.uriRecord("")];
             const bytes = Ndef.encodeMessage(message);
-            await Ntag424.setNdefMessage(bytes);
-
-            result.push("NDEF and SUN/SDM cleared");
+            try {
+                if (changesNeeded > 0) {
+                    await Ntag424.AuthEv2First("00", ZEROS);
+                }
+                await Ntag424.setNdefMessage(bytes);
+                result.push("NDEF and SUN/SDM cleared");
+            } catch {
+                result.push("NDEF clear: skipped (auth failed, keys may be partial)");
+            }
         } catch (ex) {
             hadError = true;
-            console.error("Oops!", ex, ex.constructor.name);
+            console.error("Oops!", ex, ex.constructor?.name);
             let error: string =
                 typeof ex === "object" && ex !== null
                     ? "NFC Error: " + ((ex as Error).message ?? (ex as Error).constructor?.name ?? String(ex))
