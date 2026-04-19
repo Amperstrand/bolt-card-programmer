@@ -67,16 +67,23 @@ export default function ReadNFCScreen() {
             );
 
             setCardUID(tag.id);
+            const keyVersionLabel = (keyIndex: number, version: string) => {
+                if (version === "00") {
+                    return `Key ${keyIndex} version: 00 — key is all-zeros (factory default)`;
+                }
+                return `Key ${keyIndex} version: ${version} — key has been changed`;
+            };
+
             const key0Version = await Ntag424.getKeyVersion("00");
-            setKey0Changed("Key 0 version: " + key0Version);
+            setKey0Changed(keyVersionLabel(0, key0Version));
             const key1Version = await Ntag424.getKeyVersion("01");
-            setKey1Changed("Key 1 version: " + key1Version);
+            setKey1Changed(keyVersionLabel(1, key1Version));
             const key2Version = await Ntag424.getKeyVersion("02");
-            setKey2Changed("Key 2 version: " + key2Version);
+            setKey2Changed(keyVersionLabel(2, key2Version));
             const key3Version = await Ntag424.getKeyVersion("03");
-            setKey3Changed("Key 3 version: " + key3Version);
+            setKey3Changed(keyVersionLabel(3, key3Version));
             const key4Version = await Ntag424.getKeyVersion("04");
-            setKey4Changed("Key 4 version: " + key4Version);
+            setKey4Changed(keyVersionLabel(4, key4Version));
         } catch (ex) {
             console.warn("Oops!", ex);
             let error: string =

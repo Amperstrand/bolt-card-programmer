@@ -115,7 +115,7 @@ export default function SetupBoltcard({ url }: any) {
                 try {
                     const version = await Ntag424.getKeyVersion(keySlots[i]);
                     actualOldKeys[i] = version === "00" ? ZEROS : providedKeys[i];
-                    result.push("Key " + i + ": v" + version + (version === "00" ? " (factory)" : ""));
+                    result.push("Key " + i + ": v" + version + (version === "00" ? " — key is 0000...0000, skipping" : " — using provided key"));
                 } catch {
                     actualOldKeys[i] = providedKeys[i];
                     result.push("Key " + i + ": version unknown, using provided key");
@@ -131,7 +131,7 @@ export default function SetupBoltcard({ url }: any) {
                 const oldKey = actualOldKeys[idx];
                 const label = "Key " + idx;
                 if (oldKey === ZEROS) {
-                    result.push(label + ": skipped (already factory)");
+                    result.push(label + ": already 0000...0000, skipped");
                     return;
                 }
                 try {

@@ -89,7 +89,7 @@ export default function ResetKeysScreen() {
                     const version = await Ntag424.getKeyVersion(keySlots[i]);
                     if (version === "00") {
                         actualOldKeys[i] = ZEROS;
-                        result.push("Key " + i + ": version 00 (factory) — using zeros");
+                        result.push("Key " + i + ": version 00 — key is 0000...0000, skipping");
                     } else {
                         actualOldKeys[i] = providedKeys[i];
                         changesNeeded++;
@@ -115,7 +115,7 @@ export default function ResetKeysScreen() {
                     const oldKey = actualOldKeys[idx];
                     const label = "Key " + idx;
                     if (oldKey === ZEROS) {
-                        result.push(label + ": skipped (already factory)");
+                        result.push(label + ": already 0000...0000, skipped");
                         return;
                     }
                     try {

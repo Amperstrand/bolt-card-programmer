@@ -56,13 +56,37 @@ would fail with 911e on the already-zeroed keys because the old key didn't match
 **Fix**: Always probe key versions before wiping. If version is `0x00`, that key is already
 at factory defaults — use zeros as old key, or skip entirely.
 
-### 2. LNbits k3/k4 often equals k1
+### 2. Partial reset: some keys may already be 0000...0000
+
+A card that has been through a failed or interrupted wipe can have **any combination** of
+keys still set to their original values or already reset to all-zeros. For example:
+
+- Keys 1 and 2 zeroed (they were changed first), keys 3, 4, and 0 still have original values
+- Only key 3 failed (wrong old key), everything else was wiped
+- Key 0 was changed but the card was removed before NDEF clearing
+
+**Detection**: `getKeyVersion(keyNo)` returns `"00"` when the key value is `00000000000000000000000000000000`.
+This is a plain APDU — no authentication required, no side effects, does NOT count as a
+destructive operation, does NOT trigger authentication delays.
+
+**Important**: Failed *authentication* attempts DO trigger 91ad AUTHENTICATION_DELAY on the card.
+getKeyVersion is safe because it skips auth entirely. The wipe flow probes all versions first,
+then authenticates once with the correct key 0 (zeros or config depending on version).
+
+**Recovery**: The reset flow handles this automatically:
+1. Probe all 5 key versions
+2. For version `"00"`: old key is zeros, skip changeKey (already at target state)
+3. For non-zero version: use the provided/configured key as old key
+4. Authenticate with key 0's actual value (zeros if already factory)
+5. Only attempt changeKey for keys that still need changing
+
+### 3. LNbits k3/k4 often equals k1
 
 LNbits boltcard extension commonly sets keys 3 and 4 to the same value as key 1.
 But some setups don't, and the wipe JSON may omit k3/k4 entirely.
 The k1 fallback is a heuristic, not a guarantee.
 
-### 3. Operator precedence: `!"p" in params`
+### 4. Operator precedence: `!"p" in params`
 
 ```javascript
 if (!"p" in params)  // BUG: evaluates as if ("false" in params)
@@ -71,7 +95,7 @@ if (!("p" in params)) // CORRECT
 
 This was in create.tsx and caused the p/c validation after card write to be silently skipped.
 
-### 4. expo-router vs react-navigation
+### 5. expo-router vs react-navigation
 
 This app uses expo-router (file-based routing). `useNavigation()` from `@react-navigation/native`
 is NOT available by default. Use `router.push()` / `router.replace()` from `expo-router` instead.
@@ -79,13 +103,13 @@ is NOT available by default. Use `router.push()` / `router.replace()` from `expo
 The reset tab crash was caused by calling undefined `navigation.navigate()`. The create tab
 had the correct `router.replace()` pattern.
 
-### 5. Per-key error handling for destructive operations
+### 6. Per-key error handling for destructive operations
 
 Key changes are destructive and non-atomic. If key 3 fails, keys 1 and 2 are already changed.
 The wipe MUST continue attempting remaining keys rather than stopping at first failure.
 Each key change gets its own try/catch.
 
-### 6. wipe JSON format
+### 7. wipe JSON format
 
 ```json
 {
