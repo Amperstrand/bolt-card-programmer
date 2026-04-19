@@ -38,11 +38,12 @@ export default function ResetKeysScreen() {
                 setUid(dataObj.uid);
 
                 const k1 = dataObj.k1 || defaultKey;
+                const k2 = dataObj.k2 || defaultKey;
                 setKey0(dataObj.k0 || defaultKey);
                 setKey1(k1);
-                setKey2(dataObj.k2 || defaultKey);
+                setKey2(k2);
                 setKey3(dataObj.k3 || k1);
-                setKey4(dataObj.k4 || k1);
+                setKey4(dataObj.k4 || k2);
                 let warnings = "";
                 if (dataObj.action != "wipe") {
                     warnings = "Wipe action not specified, proceed with caution.\r\n";
@@ -54,7 +55,7 @@ export default function ResetKeysScreen() {
                     warnings = warnings + " Required keys (k0/k1/k2) missing, proceed with caution";
                 }
                 if (!dataObj.k3 || !dataObj.k4) {
-                    warnings = warnings + " Keys k3/k4 missing from JSON — using k1 as fallback.\r\n";
+                    warnings = warnings + " Keys k3/k4 missing from JSON — using k1 for k3, k2 for k4 as fallback.\r\n";
                 }
                 if (warnings) {
                     setKeyJsonError(warnings);

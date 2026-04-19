@@ -114,11 +114,12 @@ then authenticates once with the correct key 0 (zeros or config depending on ver
 4. Authenticate with key 0's actual value (zeros if already factory)
 5. Only attempt changeKey for keys that still need changing
 
-### 3. LNbits k3/k4 often equals k1
+### 3. LNbits k3/k4 fallback
 
-LNbits boltcard extension commonly sets keys 3 and 4 to the same value as key 1.
-But some setups don't, and the wipe JSON may omit k3/k4 entirely.
-The k1 fallback is a heuristic, not a guarantee.
+LNbits boltcard extension commonly sets k3=k1 and k4=k2. But some setups don't,
+and the wipe JSON may omit k3/k4 entirely, or include them as all-zeros.
+The fallback is: k3 falls back to k1, k4 falls back to k2. This is a heuristic,
+not a guarantee — some implementations may use different patterns.
 
 ### 4. Operator precedence: `!"p" in params`
 
@@ -154,7 +155,7 @@ Each key change gets its own try/catch.
 ```
 
 Keys are lowercase `k0`-`k4`. The code also accepts uppercase (`K0`-`K4`).
-Only k0/k1/k2 are strictly required. k3/k4 fall back to k1.
+Only k0/k1/k2 are strictly required. k3 falls back to k1, k4 falls back to k2.
 
 ## Bolty comparison
 
