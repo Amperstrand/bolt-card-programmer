@@ -104,10 +104,17 @@ export default function ResetKeysScreen() {
 
             if (changesNeeded === 0) {
                 result.push("All keys already at factory defaults — nothing to change.");
-                result.push("Clearing NDEF only...");
-            } else {
-                const authKey = actualOldKeys[0];
-                await Ntag424.AuthEv2First("00", authKey);
+            }
+
+            try {
+                await Ntag424.AuthEv2First("00", actualOldKeys[0]);
+            } catch {
+                result.push("Auth with key 0 failed — cannot clear file settings or NDEF");
+                setWriteKeysOutput(result.join("\r\n"));
+                return;
+            }
+
+            if (changesNeeded > 0) {
                 await Ntag424.resetFileSettings();
 
                 const tryChangeKey = async (idx: number) => {
@@ -138,13 +145,11 @@ export default function ResetKeysScreen() {
             const message = [Ndef.uriRecord("")];
             const bytes = Ndef.encodeMessage(message);
             try {
-                if (changesNeeded > 0) {
-                    await Ntag424.AuthEv2First("00", ZEROS);
-                }
+                await Ntag424.AuthEv2First("00", ZEROS);
                 await Ntag424.setNdefMessage(bytes);
                 result.push("NDEF and SUN/SDM cleared");
             } catch {
-                result.push("NDEF clear: skipped (auth failed, keys may be partial)");
+                result.push("NDEF clear: skipped (re-auth with zeros failed)");
             }
         } catch (ex) {
             hadError = true;

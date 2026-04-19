@@ -45,6 +45,40 @@ If the old key you send doesn't match what's on the card → **911e INTEGRITY_ER
 
 For key 0: `Enc(newKey || keyVersion)` — no XOR, just new key + version.
 
+## Card State Detection Model
+
+Before any destructive operation, the app probes the card's actual state. This is the
+central safety mechanism. There are three screens/flows that interact with cards:
+
+### Read tab (`read.tsx`)
+Diagnostic only. Reads key versions, NDEF, UID, card type. No writes.
+Key versions are displayed as human-readable: `"00 — key is all-zeros (factory default)"`
+vs `"01 — key has been changed"`. Use this to inspect card state before wiping.
+
+### Reset tab (`reset.tsx`) — handles ANY card state
+The manual wipe flow. User provides keys via QR scan, JSON paste, or manual entry.
+Then:
+1. Connect to card, select NDEF application
+2. Probe all 5 key versions via `getKeyVersion` (plain APDU, no auth, no side effects)
+3. Build actual old-keys array: version `"00"` → use zeros, otherwise → use provided key
+4. Authenticate with key 0's probed value (zeros if factory, config if changed)
+5. For non-zero keys: `changeKey` each one to zeros (1→2→3→4→0), per-key try/catch
+6. For zero keys: skip (already at target state)
+7. Re-auth with zeros, clear NDEF
+8. If ALL keys are factory: still auth with zeros and clear NDEF for a clean state
+
+This flow recovers cards from ANY partial-wipe state because it probes before acting.
+
+### URL-driven reset (`ResetBoltcard.tsx`) — server-driven wipe
+The URL flow fetches keys from a server endpoint. It now also probes key versions
+and adapts old keys, same as the manual tab. Previously had a guard that aborted if
+key 1 was factory — this was removed because the probing loop handles it better.
+
+### Create tab / SetupBoltcard — expects FACTORY-FRESH card only
+The create flow checks that key 1 version is `"00"` and refuses to proceed otherwise.
+This is correct: you can only CREATE on a factory card. If key 1 has been changed,
+the card must be wiped first (using the Reset tab).
+
 ## Critical Lessons Learned
 
 ### 1. Never assume card state matches config
