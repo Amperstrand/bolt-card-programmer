@@ -182,3 +182,64 @@ Standard NTAG424 wipe sequence:
 
 Key 0 is changed last because it's the authentication key. Once changed, you must
 re-authenticate with the new key (zeros) before doing anything else.
+
+## Future Improvements (from cross-implementation comparison)
+
+These improvements were identified from a three-way comparison against BTCPayServer.BoltCardTools
+(C#) and Bolty (ESP32/Arduino). They are NOT yet implemented. Priority ordering:
+
+### High-value robustness (safety-critical)
+
+1. **Post-wipe verification** — After wiping all keys and clearing NDEF, re-authenticate with
+   all-zeros and probe all 5 key versions again. Confirm every version is `"00"`. Right now the
+   wipe flow assumes success if no changeKey call threw an exception. A verification step would
+   catch silent failures or partial wipes that the per-key try/catch didn't detect.
+   Source: Bolty's post-burn verification pattern.
+
+2. **Auth retry with card re-activation** — If `AuthEv2First` fails (especially `91ad`
+   AUTHENTICATION_DELAY from a previous failed attempt), deactivate the NFC tag and re-activate
+   it before retrying. Real-world NFC connections are unreliable; cards drop off the reader
+   mid-operation. This is especially important during multi-key wipe sequences.
+   Source: Bolty's auth retry logic in burn/wipe paths.
+
+3. **Card type validation** — Before attempting any NTAG424-specific commands, verify the card
+   is actually an NTAG424 DNA. Check the card type/UID response. This prevents confusing
+   6a82 errors when a user taps the wrong card type (MIFARE Classic, NTAG213, etc.).
+   Source: Bolty's `ntag424_isNTAG424()` guard.
+
+### Architectural improvements (nice-to-have)
+
+4. **Structured key model** — Replace the 5 loose string variables (`k0`–`k4`) with a named
+   `BoltcardKeys` object containing `masterKey`, `authKey`, `encryptionKey`, `macReadKey`,
+   `macWriteKey` (or similar semantic names). Add a `createFromJson()` factory with the k3/k4
+   fallback logic built in. Source: BTCPayServer's `BoltcardKeys` class.
+
+5. **Transport abstraction** — Extract an `IAPDUTransport` interface from NTag424.tsx so the
+   command layer is decoupled from NFC hardware. This enables unit testing the protocol logic
+   without a physical card. Source: BTCPayServer's `IAPDUTransport` + `PCSCAPDUTransport`.
+
+6. **Deterministic key derivation** — Support deriving all 5 card keys from a single issuer
+   master key + card UID, using the NXP key derivation protocol. This is how BTCPayServer
+   provisions cards — one secret per issuer, not per card. Source: BTCPayServer's
+   `IssuerKey → CardKey → DeriveBoltcardKeys()` chain.
+
+7. **PICC data module** — Implement proper decryption and parsing of the `p=` URL parameter
+   (PICC data: UID, card counter, SDM read counter) and `c=` parameter (CMAC verification).
+   This enables the app to verify a card's authentic response without needing a server round-trip.
+   Source: BTCPayServer's `PICCData` class and CMAC validation.
+
+### Reference implementations for comparison
+
+- **BTCPayServer.BoltCardTools**: `/tmp/btcpay-boltcard-tools/` on this machine
+  - `src/BTCPayServer.NTag424/Ntag424.cs` — Core NTAG424 protocol (C#)
+  - `src/BTCPayServer.NTag424/BoltcardKeys.cs` — Structured key model
+  - `src/BTCPayServer.NTag424/IssuerKey.cs` + `CardKey.cs` — Deterministic key derivation
+  - `src/BTCPayServer.NTag424/PICCData.cs` — PICC data parsing
+  - `src/BTCPayServer.NTag424/FileSettings.cs` — File settings model
+  - `src/BTCPayServer.NTag424/IAPDUTransport.cs` — Transport abstraction
+
+- **Bolty**: `/tmp/bolty/` on this machine
+  - `src/bolt.h` — All NFC/card logic in a single header (721 lines)
+  - `src/bolty.ino` — Main Arduino sketch
+  - `src/gui.h` — Display/UI layer
+  - `src/hardware_config.h` — Pin definitions and board selection
