@@ -7,7 +7,7 @@ export default function defineConfig({ config }: ConfigContext): ExpoConfig {
         ...config,
         name: "bolt-card-programmer",
         slug: "bolt-card-programmer",
-        version: "0.5.1",
+        version: "0.6.2",
         orientation: "portrait",
         icon: "./assets/images/icon.png",
         scheme: "boltcardprogrammer",
@@ -18,7 +18,7 @@ export default function defineConfig({ config }: ConfigContext): ExpoConfig {
             bundleIdentifier: "com.lightningnfcapp",
         },
         android: {
-            versionCode: 1766085752,
+            versionCode: 1784647803,
             package: "com.lightningnfcapp",
             adaptiveIcon: {
                 backgroundColor: "#E6F4FE",
