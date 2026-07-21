@@ -236,7 +236,8 @@ export default function CreateBoltcardScreen() {
                                     router.replace({
                                         pathname: "/(tabs)/create",
                                         params: {
-                                            data: pasteUrlValue,
+                                            // screen reads `params.result` (not `data`) — see top of component
+                                            result: pasteUrlValue,
                                             timestamp: Date.now(),
                                         },
                                     });
