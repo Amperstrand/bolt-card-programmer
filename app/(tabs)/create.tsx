@@ -9,12 +9,16 @@ import { Card, Title } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ntag424 from "../class/NTag424";
 import DisplayAuthInfo from "../components/DisplayAuthInfo";
+import parseBoltcardUrl from "../utils/parseBoltcardUrl";
 
 export default function CreateBoltcardScreen() {
     const params = useLocalSearchParams();
     console.log("CreateBoltcardScreen params:", params);
     const { result } = params;
-    const data = result ? result.toString() : null;
+    // Accept both a plain auth URL and a boltcard://program?url=... deeplink QR.
+    // The camera/deeplink path is unwrapped by expo-router (app/program.tsx), but
+    // the in-app scanner passes the raw scanned string straight through.
+    const data = result ? parseBoltcardUrl(result.toString()) : null;
     const navigation = useNavigation();
 
     const [promptVisible, setPromptVisible] = useState(false);
