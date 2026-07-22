@@ -11,14 +11,15 @@ export default function defineConfig({ config }: ConfigContext): ExpoConfig {
         orientation: "portrait",
         icon: "./assets/images/icon.png",
         scheme: "boltcardprogrammer",
-        userInterfaceStyle: "automatic",
+        userInterfaceStyle: "dark",
+        backgroundColor: "#0C0D10",
         newArchEnabled: true,
         ios: {
             supportsTablet: true,
             bundleIdentifier: "com.lightningnfcapp",
         },
         android: {
-            versionCode: 1784647803,
+            versionCode: 1784678691,
             package: "com.lightningnfcapp",
             adaptiveIcon: {
                 backgroundColor: "#E6F4FE",
@@ -43,9 +44,9 @@ export default function defineConfig({ config }: ConfigContext): ExpoConfig {
                     image: "./assets/images/splash-icon.png",
                     imageWidth: 200,
                     resizeMode: "contain",
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "#0C0D10",
                     dark: {
-                        backgroundColor: "#000000",
+                        backgroundColor: "#0C0D10",
                     },
                 },
             ],

@@ -1,172 +1,173 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import Constants from "expo-constants";
 import React from "react";
-import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Card, Title } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-const gitinfo = "NOT_SET";
+import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+import { Button, Card, Screen } from "@/components/ui";
+import { colors, radius, spacing, type } from "@/constants/theme";
 
 const appVersion = Constants.expoConfig?.version ?? "unknown";
 
+type GetStartedStep = {
+    name: string;
+    badge?: string;
+    copy: string;
+    linkLabel: string;
+    icon: React.ComponentProps<typeof Button>["icon"];
+    url: string;
+};
+
+const getStartedSteps: GetStartedStep[] = [
+    {
+        name: "Bolt Card Hub Launcher",
+        badge: "Easiest",
+        copy: "Launch a hosted Bolt Card Hub in one click, then scan its QR code in the Create tab.",
+        linkLabel: "Open Hub Launcher",
+        icon: "rocket-outline",
+        url: "https://bolt-card-hub-launcher.vercel.app/",
+    },
+    {
+        name: "BTCPay Server",
+        copy: "Issue and top up Bolt Cards from your own BTCPay Server store using Pull Payments.",
+        linkLabel: "BTCPay Server setup guide",
+        icon: "server-outline",
+        url: "https://blog.btcpayserver.org/btcpay-server-1-12-0/",
+    },
+    {
+        name: "LNbits",
+        copy: "Run the boltcards extension on your LNbits instance and create cards from a wallet.",
+        linkLabel: "LNbits extension docs",
+        icon: "flash-outline",
+        url: "https://github.com/lnbits/boltcards",
+    },
+];
+
+function LinkButton({
+    title,
+    icon,
+    url,
+}: {
+    title: string;
+    icon: React.ComponentProps<typeof Button>["icon"];
+    url: string;
+}) {
+    return (
+        <Button
+            variant="secondary"
+            title={title}
+            icon={icon}
+            onPress={() => Linking.openURL(url)}
+            style={styles.linkButton}
+        />
+    );
+}
+
 export default function HelpScreen() {
     return (
-        <>
-            <SafeAreaView>
-                <ScrollView>
-                    <Card style={{ marginBottom: 20, marginHorizontal: 10 }}>
-                        <Card.Content>
-                            <Title selectable={true}>Bolt Card Programmer</Title>
-                            <Text style={styles.version} selectable={true}>
-                                Version {appVersion}
-                            </Text>
-                        </Card.Content>
-                    </Card>
-                    <Card style={{ marginBottom: 20, marginHorizontal: 10 }}>
-                        <Card.Content>
-                            <Title>Built By</Title>
-                            <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
-                                <TouchableOpacity onPress={() => Linking.openURL("https://onesandzeros.nz")}>
-                                    <Image
-                                        style={{ width: 120, height: 50 }}
-                                        source={require("../../image/OAZ-Logo.png")}
-                                    />
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => Linking.openURL("https://www.whitewolftech.com")}>
-                                    <Image
-                                        style={{ width: 170, height: 50 }}
-                                        source={require("../../image/wwt-on-white-sample.png")}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </Card.Content>
-                    </Card>
-                    <Card style={{ marginBottom: 20, marginHorizontal: 10 }}>
-                        <Card.Content>
-                            <Title>Card Errors</Title>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() =>
-                                    Linking.openURL(
-                                        "https://github.com/boltcard/bolt-nfc-android-app/blob/master/card-programming-errors.md"
-                                    )
-                                }
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="logo-github" size={20} color="white" /> Card Programming Errors
-                                </Text>
-                            </TouchableOpacity>
-                            <Title>Instructions</Title>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() =>
-                                    Linking.openURL(
-                                        "https://lasereyes.cards/how-to-use/lnbits-bolt-card-setup-instructions/"
-                                    )
-                                }
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="flash" size={20} color="white" /> LNBits Setup
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() =>
-                                    Linking.openURL("https://github.com/boltcard/boltcard/blob/main/docs/INSTALL.md")
-                                }
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="logo-github" size={20} color="white" /> Bolt Card Service Setup
-                                </Text>
-                            </TouchableOpacity>
-                        </Card.Content>
-                    </Card>
-                    <Card style={{ marginBottom: 20, marginHorizontal: 10 }}>
-                        <Card.Content>
-                            <Title>Links</Title>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => Linking.openURL("https://t.me/bolt_card")}
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="paper-plane-outline" size={20} color="white" /> Bolt Card Telegram
-                                    Help
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => Linking.openURL("https://github.com/boltcard")}
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="logo-github" size={20} color="white" /> Bolt Card Github
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => Linking.openURL("https://lnbits.com")}
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="flash" size={20} color="white" /> LNBits.com
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => Linking.openURL("https://t.me/lnbits")}
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="paper-plane-outline" size={20} color="white" /> LNBits Telegram Help
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => Linking.openURL("https://boltcardwallet.com")}
-                            >
-                                <Text style={styles.buttonText}>
-                                    <Ionicons name="link-outline" size={20} color="white" /> BoltCardWallet.com
-                                </Text>
-                            </TouchableOpacity>
-                        </Card.Content>
-                    </Card>
-                </ScrollView>
-            </SafeAreaView>
-        </>
+        <Screen>
+            <Card>
+                <Text selectable style={type.title}>
+                    Bolt Card Programmer
+                </Text>
+                <Text selectable style={type.caption}>
+                    Version {appVersion}
+                </Text>
+            </Card>
+            <Card title="Get started">
+                <Text style={type.caption}>
+                    Your card needs a Bolt Card service to point at. Pick one of these, easiest first:
+                </Text>
+                {getStartedSteps.map((step) => (
+                    <View key={step.name} style={styles.step}>
+                        <View style={styles.stepHeader}>
+                            <Text style={type.heading}>{step.name}</Text>
+                            {step.badge ? (
+                                <View style={styles.badge}>
+                                    <Text style={styles.badgeText}>{step.badge}</Text>
+                                </View>
+                            ) : null}
+                        </View>
+                        <Text style={type.caption}>{step.copy}</Text>
+                        <LinkButton title={step.linkLabel} icon={step.icon} url={step.url} />
+                    </View>
+                ))}
+            </Card>
+            <Card title="Instructions">
+                <LinkButton
+                    title="LNbits setup tutorial"
+                    icon="flash-outline"
+                    url="https://lasereyes.cards/how-to-use/lnbits-bolt-card-setup-instructions/"
+                />
+                <LinkButton
+                    title="Bolt Card service setup"
+                    icon="logo-github"
+                    url="https://github.com/boltcard/boltcard/blob/main/docs/INSTALL.md"
+                />
+                <LinkButton
+                    title="Card programming errors"
+                    icon="logo-github"
+                    url="https://github.com/boltcard/bolt-nfc-android-app/blob/master/card-programming-errors.md"
+                />
+            </Card>
+            <Card title="Links">
+                <LinkButton title="Bolt Card Telegram help" icon="paper-plane-outline" url="https://t.me/bolt_card" />
+                <LinkButton title="Bolt Card GitHub" icon="logo-github" url="https://github.com/boltcard" />
+                <LinkButton title="LNbits.com" icon="flash-outline" url="https://lnbits.com" />
+                <LinkButton title="LNbits Telegram help" icon="paper-plane-outline" url="https://t.me/lnbits" />
+                <LinkButton title="BoltCardWallet.com" icon="link-outline" url="https://boltcardwallet.com" />
+            </Card>
+            <Card title="Built By">
+                <View style={styles.logoRow}>
+                    <TouchableOpacity style={styles.logoChip} onPress={() => Linking.openURL("https://onesandzeros.nz")}>
+                        <Image style={{ width: 120, height: 50 }} source={require("../../image/OAZ-Logo.png")} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.logoChip}
+                        onPress={() => Linking.openURL("https://www.whitewolftech.com")}
+                    >
+                        <Image style={{ width: 170, height: 50 }} source={require("../../image/wwt-on-white-sample.png")} />
+                    </TouchableOpacity>
+                </View>
+            </Card>
+        </Screen>
     );
 }
 
 const styles = StyleSheet.create({
-    version: {
-        marginTop: 4,
-        color: "#777",
-        fontSize: 14,
+    linkButton: {
+        alignSelf: "stretch",
+        justifyContent: "flex-start",
     },
-    button: {
-        backgroundColor: "rgb(0,122,255)",
-        padding: 5,
+    step: {
+        gap: spacing.sm,
+        paddingTop: spacing.sm,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.border,
+    },
+    stepHeader: {
         flexDirection: "row",
-        alignSelf: "flex-start",
-        marginBottom: 10,
+        alignItems: "center",
+        gap: spacing.sm,
     },
-    buttonText: {
-        textTransform: "uppercase",
-        color: "white",
-        fontWeight: "bold",
+    badge: {
+        borderWidth: 1,
+        borderColor: colors.accent,
+        borderRadius: 999,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 1,
+    },
+    badgeText: {
+        color: colors.accent,
+        fontSize: 11,
+        fontWeight: "600",
+    },
+    logoRow: {
         flexDirection: "row",
-        fontSize: 15,
+        flexWrap: "wrap",
+        gap: spacing.md,
     },
-    centerText: {
-        flex: 1,
-        fontSize: 18,
-        padding: 32,
-        color: "#777",
-    },
-    textBold: {
-        fontWeight: "500",
-        color: "#000",
-    },
-
-    buttonTouchable: {
-        padding: 16,
-    },
-    paragraph: {
-        marginBottom: 20,
+    logoChip: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: radius.input,
+        padding: spacing.sm,
     },
 });

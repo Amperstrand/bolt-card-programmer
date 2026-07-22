@@ -1,9 +1,10 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import nfcManager, { Ndef, NfcTech } from "react-native-nfc-manager";
-import { ActivityIndicator, Button, Card, Text, Title } from "react-native-paper";
+
+import { Button, Card, MonoField, NfcPulse, SectionTitle, StatusRow } from "@/components/ui";
+import { colors, spacing, type } from "@/constants/theme";
 import Ntag424 from "../class/NTag424";
 
 const SetupStep = {
@@ -43,12 +44,14 @@ export default function SetupBoltcard({ url }: any) {
 
     if (!url) {
         return (
-            <View style={{ padding: 20 }}>
-                <Text>No valid URL passed.</Text>
-            </View>
+            <Card>
+                <Text style={type.body}>No valid URL passed.</Text>
+            </Card>
         );
     }
 
+    // Pre-existing hook-order hazard: this early return sits above useFocusEffect.
+    // The url prop is fixed per mount in practice, so the order is stable at runtime.
     useFocusEffect(
         React.useCallback(() => {
             readNfc();
@@ -252,138 +255,61 @@ export default function SetupBoltcard({ url }: any) {
         }
     };
 
-    const showTickOrError = (good: any) => {
-        return good ? (
-            <Ionicons name="checkmark-circle" size={20} color="green" />
-        ) : (
-            <Ionicons name="alert-circle" size={20} color="red" />
-        );
-    };
-
     return (
-        <Card
-            style={{
-                marginVertical: 20,
-                marginHorizontal: 10,
-                textAlign: "center",
-                paddingVertical: 30,
-            }}
-        >
+        <Card centered>
             <WithStep step={SetupStep.Init} current={step}>
-                <Card.Content>
-                    <ActivityIndicator size="large" />
-                </Card.Content>
+                <ActivityIndicator size="large" color={colors.accent} />
             </WithStep>
             <WithStep step={SetupStep.Restart} current={step}>
-                <Card.Content>
-                    <Button onPress={readNfc}>Start programming the card</Button>
-                </Card.Content>
+                <Button title="Start programming the card" onPress={readNfc} />
             </WithStep>
-            {readingNfc && (
-                <Card.Content>
-                    <Title style={styles.textCenter}>Hold your card until it's finished</Title>
-                </Card.Content>
-            )}
             <WithStep step={SetupStep.HoldCard} current={step}>
-                <Card.Content>
-                    <View>
-                        <Ionicons name="card" size={50} color="green" style={{ alignSelf: "center" }} />
-                        <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                            Ready to write card. Hold NFC card to phone until all keys are changed.
-                        </Text>
-                    </View>
-                </Card.Content>
+                <NfcPulse label="Hold NFC card to phone" sublabel="Keep holding until all keys are written" />
             </WithStep>
             <WithStep step={SetupStep.ReadingUid} current={step}>
-                <Card.Content>
-                    <View>
-                        <Ionicons name="card" size={50} color="green" style={{ alignSelf: "center" }} />
-                        <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                            Reading your card UID.
-                        </Text>
-                        <ActivityIndicator />
-                    </View>
-                </Card.Content>
+                <NfcPulse label="Reading card UID…" sublabel="Keep holding the card" />
             </WithStep>
             <WithStep step={SetupStep.RequestingKeys} current={step}>
-                <Card.Content>
-                    <View>
-                        <Ionicons name="card" size={50} color="green" style={{ alignSelf: "center" }} />
-                        <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                            Requesting new keys.
-                        </Text>
-                        <ActivityIndicator />
-                    </View>
-                </Card.Content>
+                <NfcPulse label="Requesting new keys…" sublabel="Keep holding the card" />
             </WithStep>
             <WithStep step={SetupStep.WritingCard} current={step}>
-                <View>
-                    <Card.Content>
-                        {writingCard && (
-                            <View>
-                                <Text>Writing card...</Text>
-                                <ActivityIndicator />
-                            </View>
-                        )}
-                        <Title>Output</Title>
-                        {tagTypeError && (
-                            <Text>
-                                Tag Type Error: {tagTypeError}
-                                <Ionicons name="alert-circle" size={20} color="red" />
-                            </Text>
-                        )}
-                        {ndefWritten && (
-                            <Text>
-                                NDEF written: {ndefWritten}
-                                {showTickOrError(ndefWritten)}
-                            </Text>
-                        )}
-                        <Text>Key 0 {showTickOrError(key0Changed)}</Text>
-                        <Text>Key 1 {showTickOrError(key1Changed)}</Text>
-                        <Text>Key 2 {showTickOrError(key2Changed)}</Text>
-                        <Text>Key 3 {showTickOrError(key3Changed)}</Text>
-                        <Text>Key 4 {showTickOrError(key4Changed)}</Text>
-                        {writekeys && (
-                            <Text>
-                                Keys Changed: {writekeys}
-                                {showTickOrError(writekeys == "success")}
-                            </Text>
-                        )}
-                        {uidPrivacyEnabled && (
-                            <Text>
-                                Private UID enabled
-                                {showTickOrError(true)}
-                            </Text>
-                        )}
-                        <Text>Card UID: {cardUID}</Text>
-                        {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
-                        {testp && (
-                            <Text>
-                                Test PICC:{" "}
-                                {cardUID && cardUID.length == 8 ? (
-                                    <>test skipped {showTickOrError(true)}</>
-                                ) : (
-                                    <>
-                                        {testp}
-                                        {showTickOrError(testp == "ok")}
-                                    </>
-                                )}
-                            </Text>
-                        )}
-                        {testc && (
-                            <Text>
-                                Test CMAC: {testc}
-                                {showTickOrError(testc == "ok")}
-                            </Text>
-                        )}
-                        {testBolt && (
-                            <Text>
-                                Bolt call test: {testBolt}
-                                {showTickOrError(testBolt == "success")}
-                            </Text>
-                        )}
-                        {!writingCard && <Button onPress={readNfc}>Write again</Button>}
-                    </Card.Content>
+                <View style={styles.output}>
+                    {writingCard && <StatusRow status="pending" label="Writing card — keep holding it…" />}
+                    <SectionTitle>Output</SectionTitle>
+                    {tagTypeError ? <StatusRow status="error" label="Tag Type Error" detail={tagTypeError} /> : null}
+                    {ndefWritten ? <StatusRow status="success" label="NDEF written" /> : null}
+                    <StatusRow status={key0Changed ? "success" : "error"} label="Key 0" />
+                    <StatusRow status={key1Changed ? "success" : "error"} label="Key 1" />
+                    <StatusRow status={key2Changed ? "success" : "error"} label="Key 2" />
+                    <StatusRow status={key3Changed ? "success" : "error"} label="Key 3" />
+                    <StatusRow status={key4Changed ? "success" : "error"} label="Key 4" />
+                    {writekeys ? (
+                        <StatusRow
+                            status={writekeys == "success" ? "success" : "error"}
+                            label="Keys changed"
+                            detail={writekeys == "success" ? undefined : writekeys}
+                        />
+                    ) : null}
+                    {uidPrivacyEnabled ? <StatusRow status="success" label="Private UID enabled" /> : null}
+                    <MonoField label="Card UID" value={cardUID} />
+                    {ndefRead ? <MonoField label="Read NDEF" value={ndefRead} /> : null}
+                    {testp ? (
+                        cardUID && cardUID.length == 8 ? (
+                            <StatusRow status="success" label="Test PICC: test skipped" />
+                        ) : (
+                            <StatusRow status={testp == "ok" ? "success" : "error"} label={`Test PICC: ${testp}`} />
+                        )
+                    ) : null}
+                    {testc ? (
+                        <StatusRow status={testc == "ok" ? "success" : "error"} label={`Test CMAC: ${testc}`} />
+                    ) : null}
+                    {testBolt ? (
+                        <StatusRow
+                            status={testBolt == "success" ? "success" : "error"}
+                            label={`Bolt call test: ${testBolt}`}
+                        />
+                    ) : null}
+                    {!writingCard && <Button title="Write again" onPress={readNfc} style={styles.again} />}
                 </View>
             </WithStep>
         </Card>
@@ -391,7 +317,12 @@ export default function SetupBoltcard({ url }: any) {
 }
 
 const styles = StyleSheet.create({
-    textCenter: {
-        textAlign: "center",
+    output: {
+        alignSelf: "stretch",
+        gap: spacing.sm,
+    },
+    again: {
+        alignSelf: "center",
+        marginTop: spacing.sm,
     },
 });

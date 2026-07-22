@@ -1,6 +1,8 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+
+import { MonoField, StatusRow } from "@/components/ui";
+import { spacing } from "@/constants/theme";
 
 export default function DisplayAuthInfo(props: any) {
     const {
@@ -106,32 +108,28 @@ export default function DisplayAuthInfo(props: any) {
     return (
         <>
             {loading ? (
-                <Text>
-                    <ActivityIndicator /> Loading....{" "}
-                </Text>
+                <StatusRow status="pending" label="Loading auth info…" />
             ) : !error ? (
-                <View>
-                    <Text style={styles.monospace}>lnurl: {lnurlw_base}</Text>
-                    <Text style={styles.monospace}>card_name: {cardName}</Text>
-                    <Text style={styles.monospace}>Key 0: {key0display}</Text>
-                    <Text style={styles.monospace}>Key 1: {key1display}</Text>
-                    <Text style={styles.monospace}>Key 2: {key2display}</Text>
-                    <Text style={styles.monospace}>Key 3: {key3display}</Text>
-                    <Text style={styles.monospace}>Key 4: {key4display}</Text>
-                    <Text style={styles.monospace}>Private UID: {privateUID ? "Yes" : "No"}</Text>
+                <View style={styles.rows}>
+                    <MonoField label="lnurl" value={lnurlw_base} />
+                    <MonoField label="card_name" value={cardName} />
+                    <MonoField label="Key 0" value={key0display} />
+                    <MonoField label="Key 1" value={key1display} />
+                    <MonoField label="Key 2" value={key2display} />
+                    <MonoField label="Key 3" value={key3display} />
+                    <MonoField label="Key 4" value={key4display} />
+                    <MonoField label="Private UID" value={privateUID ? "Yes" : "No"} />
                     {privateUID && (
-                        <Text style="">
-                            <Ionicons name="alert-circle" size={20} color="orange" /> Private UID cannot be undone. See
-                            the help section for more details
-                        </Text>
+                        <StatusRow
+                            status="warning"
+                            label="Private UID cannot be undone. See the help section for more details."
+                        />
                     )}
                 </View>
             ) : (
-                <View>
-                    <Text>URL: {data}</Text>
-                    <Text>
-                        <Ionicons name="alert-circle" size={20} color="red" /> Error: {error}
-                    </Text>
+                <View style={styles.rows}>
+                    <StatusRow status="error" label={`Error: ${error}`} />
+                    <MonoField label="URL" value={data} />
                 </View>
             )}
         </>
@@ -139,10 +137,8 @@ export default function DisplayAuthInfo(props: any) {
 }
 
 const styles = StyleSheet.create({
-    paragraph: {
-        marginBottom: 5,
-    },
-    monospace: {
-        fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+    rows: {
+        gap: spacing.sm,
+        alignSelf: "stretch",
     },
 });

@@ -1,9 +1,10 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import nfcManager, { Ndef, NfcTech } from "react-native-nfc-manager";
-import { ActivityIndicator, Button, Card, Text, Title } from "react-native-paper";
+
+import { Button, Card, NfcPulse, SectionTitle, StatusRow } from "@/components/ui";
+import { colors, spacing, type } from "@/constants/theme";
 import Ntag424 from "../class/NTag424";
 
 const SetupStep = {
@@ -31,12 +32,14 @@ export default function SetupBoltcard({ url }: any) {
 
     if (!url) {
         return (
-            <View style={{ padding: 20 }}>
-                <Text>No valid URL passed.</Text>
-            </View>
+            <Card>
+                <Text style={type.body}>No valid URL passed.</Text>
+            </Card>
         );
     }
 
+    // Pre-existing hook-order hazard: this early return sits above useFocusEffect.
+    // The url prop is fixed per mount in practice, so the order is stable at runtime.
     useFocusEffect(
         React.useCallback(() => {
             readNfc();
@@ -156,89 +159,34 @@ export default function SetupBoltcard({ url }: any) {
         }
     };
 
-    const showTickOrError = (good: any) => {
-        return good ? (
-            <Ionicons name="checkmark-circle" size={20} color="green" />
-        ) : (
-            <Ionicons name="alert-circle" size={20} color="red" />
-        );
-    };
-
     return (
-        <Card
-            style={{
-                marginVertical: 20,
-                marginHorizontal: 10,
-                textAlign: "center",
-                paddingVertical: 30,
-            }}
-        >
+        <Card centered>
             <WithStep step={SetupStep.Init} current={step}>
-                <Card.Content>
-                    <ActivityIndicator size="large" />
-                </Card.Content>
+                <ActivityIndicator size="large" color={colors.accent} />
             </WithStep>
             <WithStep step={SetupStep.Restart} current={step}>
-                <Card.Content>
-                    <Button onPress={readNfc}>Start resetting the card</Button>
-                </Card.Content>
+                <Button title="Start resetting the card" onPress={readNfc} />
             </WithStep>
-            {readingNfc && (
-                <Card.Content>
-                    <Title style={styles.textCenter}>Hold your card until it's finished</Title>
-                </Card.Content>
-            )}
             <WithStep step={SetupStep.HoldCard} current={step}>
-                <Card.Content>
-                    <View>
-                        <Ionicons name="card" size={50} color="green" style={{ alignSelf: "center" }} />
-                        <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                            Ready to reset card. Hold NFC card to phone until all keys are changed.
-                        </Text>
-                    </View>
-                </Card.Content>
+                <NfcPulse label="Hold NFC card to phone" sublabel="Keep holding until all keys are changed" />
             </WithStep>
             <WithStep step={SetupStep.ReadingUid} current={step}>
-                <Card.Content>
-                    <View>
-                        <Ionicons name="card" size={50} color="green" style={{ alignSelf: "center" }} />
-                        <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                            Reading your card UID.
-                        </Text>
-                        <ActivityIndicator />
-                    </View>
-                </Card.Content>
+                <NfcPulse label="Reading card UID…" sublabel="Keep holding the card" />
             </WithStep>
             <WithStep step={SetupStep.RequestingKeys} current={step}>
-                <Card.Content>
-                    <View>
-                        <Ionicons name="card" size={50} color="green" style={{ alignSelf: "center" }} />
-                        <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                            Requesting keys to wipe.
-                        </Text>
-                        <ActivityIndicator />
-                    </View>
-                </Card.Content>
+                <NfcPulse label="Requesting keys to wipe…" sublabel="Keep holding the card" />
             </WithStep>
             <WithStep step={SetupStep.WritingCard} current={step}>
-                <View>
-                    <Card.Content>
-                        {writingCard && (
-                            <View>
-                                <Text>Writing card...</Text>
-                                <ActivityIndicator />
-                            </View>
-                        )}
-                        <Title>Output</Title>
-                        {tagTypeError && (
-                            <Text>
-                                Tag Type Error: {tagTypeError}
-                                <Ionicons name="alert-circle" size={20} color="red" />
-                            </Text>
-                        )}
-                        {writeKeysOutput && <Text>{writeKeysOutput}</Text>}
-                        <Button onPress={readNfc}>Wipe again</Button>
-                    </Card.Content>
+                <View style={styles.output}>
+                    {writingCard && <StatusRow status="pending" label="Writing card — keep holding it…" />}
+                    <SectionTitle>Output</SectionTitle>
+                    {tagTypeError ? <StatusRow status="error" label="Tag Type Error" detail={tagTypeError} /> : null}
+                    {writeKeysOutput ? (
+                        <Text selectable style={type.mono}>
+                            {writeKeysOutput}
+                        </Text>
+                    ) : null}
+                    {!writingCard && <Button title="Wipe again" onPress={readNfc} style={styles.again} />}
                 </View>
             </WithStep>
         </Card>
@@ -246,7 +194,12 @@ export default function SetupBoltcard({ url }: any) {
 }
 
 const styles = StyleSheet.create({
-    textCenter: {
-        textAlign: "center",
+    output: {
+        alignSelf: "stretch",
+        gap: spacing.sm,
+    },
+    again: {
+        alignSelf: "center",
+        marginTop: spacing.sm,
     },
 });

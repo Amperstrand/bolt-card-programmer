@@ -1,8 +1,11 @@
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+
+import { Button, Screen } from "@/components/ui";
+import { colors, spacing, type } from "@/constants/theme";
 
 export default function ScanQR() {
     const params = useLocalSearchParams();
@@ -25,65 +28,35 @@ export default function ScanQR() {
 
     if (!permission) {
         // Camera permissions are still loading.
-        return <View />;
+        return <View style={styles.loading} />;
     }
 
     if (!permission.granted) {
         // Camera permissions are not granted yet.
         return (
-            <View style={[styles.wrapper, styles.container]}>
-                <View
-                    style={{
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 20,
-                    }}
-                >
-                    <View
-                        style={{
-                            position: "relative",
-                        }}
-                    >
-                        <Ionicons name="camera" size={100} color="black" />
-                        <Ionicons
-                            name="sparkles"
-                            size={20}
-                            style={{ position: "absolute", top: 0, right: 0 }}
-                            color="Orange"
-                        />
-                    </View>
-                </View>
-                <Text style={{ textAlign: "center", fontWeight: 700, marginBottom: 10 }}>Camera Access</Text>
-                <Text style={{ textAlign: "center", marginBottom: 50 }}>
+            <Screen scroll={false} style={styles.message}>
+                <Ionicons name="camera-outline" size={72} color={colors.textMuted} />
+                <Text style={[type.heading, styles.centerText]}>Camera access</Text>
+                <Text style={[type.caption, styles.centerText]}>
                     We need access to your camera to scan QR codes. Please allow camera permission to continue.
                 </Text>
-                <Pressable onPress={requestPermission} style={{ marginBottom: 10 }}>
-                    <Text>Allow</Text>
-                </Pressable>
-                <Pressable onPress={() => router.back()}>
-                    <Text>Go Back</Text>
-                </Pressable>
-            </View>
+                <Button title="Allow camera access" onPress={requestPermission} />
+                <Button variant="ghost" title="Go back" onPress={() => router.back()} />
+            </Screen>
         );
     }
 
     if (notQR) {
         return (
-            <View style={[styles.wrapper, styles.container]}>
-                <FontAwesome
-                    name="exclamation-triangle"
-                    size={100}
-                    color="orange"
-                    style={{ textAlign: "center", marginBottom: 40 }}
-                />
-                <Text style={{ textAlign: "center", fontWeight: 700, marginBottom: 10 }}>Oops!</Text>
-                <Text style={{ textAlign: "center", marginBottom: 50 }}>
-                    This is not a QR Code. Please try scanning again.
+            <Screen scroll={false} style={styles.message}>
+                <Ionicons name="warning-outline" size={72} color={colors.accent} />
+                <Text style={[type.heading, styles.centerText]}>Not a QR code</Text>
+                <Text style={[type.caption, styles.centerText]}>
+                    This is not a QR code. Please try scanning again.
                 </Text>
-                <Pressable onPress={() => setNotQR(false)}>
-                    <Text>Try Again</Text>
-                </Pressable>
-            </View>
+                <Button title="Try again" onPress={() => setNotQR(false)} />
+                <Button variant="ghost" title="Go back" onPress={() => router.back()} />
+            </Screen>
         );
     }
 
@@ -113,61 +86,59 @@ export default function ScanQR() {
                 }}
             />
             <View style={styles.buttonContainer}>
-                <View>
-                    <View style={{ flexGrow: 1 }}>
-                        <Pressable style={styles.button} onPress={toggleCameraFacing}>
-                            <Text style={styles.text}>
-                                <Ionicons name="camera-reverse" size={20} color="#ffffff" /> Flip Camera
-                            </Text>
-                        </Pressable>
-                    </View>
-                    <View style={{ flexGrow: 1 }}>
-                        <Pressable
-                            style={styles.button}
-                            onPress={() => {
-                                router.back();
-                            }}
-                        >
-                            <Text style={styles.text}>
-                                <Ionicons name="close" size={20} color="#ffffff" /> Cancel
-                            </Text>
-                        </Pressable>
-                    </View>
-                </View>
+                <Button
+                    variant="secondary"
+                    icon="camera-reverse"
+                    title="Flip camera"
+                    onPress={toggleCameraFacing}
+                    style={styles.overlayButton}
+                />
+                <Button
+                    variant="secondary"
+                    icon="close"
+                    title="Cancel"
+                    onPress={() => {
+                        router.back();
+                    }}
+                    style={styles.overlayButton}
+                />
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    loading: {
+        flex: 1,
+        backgroundColor: colors.bg,
+    },
     wrapper: {
         flex: 1,
         justifyContent: "center",
-    },
-    container: {
-        paddingHorizontal: 20,
+        backgroundColor: colors.bg,
     },
     message: {
+        alignItems: "center",
+        justifyContent: "center",
+        padding: spacing.xl,
+        gap: spacing.md,
+    },
+    centerText: {
         textAlign: "center",
-        paddingBottom: 10,
     },
     camera: {
         flex: 1,
     },
     buttonContainer: {
-        backgroundColor: "transparent",
         position: "absolute",
         bottom: 60,
         left: 0,
         right: 0,
-        top: "auto",
         paddingHorizontal: 30,
+        gap: spacing.md,
     },
-    button: { paddingHorizontal: 10, paddingVertical: 15 },
-    text: {
-        fontSize: 20,
-        fontWeight: "bold",
-        textAlign: "center",
-        color: "#fff",
+    overlayButton: {
+        backgroundColor: colors.overlay,
+        borderWidth: 0,
     },
 });

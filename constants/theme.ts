@@ -1,53 +1,55 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens for the app's dark-only theme.
+ * Every color, spacing, radius, and text style in the UI should come from here.
  */
 
-import { Platform } from 'react-native';
+import { DarkTheme, type Theme } from "@react-navigation/native";
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+export const colors = {
+    bg: "#0C0D10",
+    surface: "#15171C",
+    surfaceAlt: "#1D2026",
+    border: "#2A2E37",
+    text: "#ECEEF2",
+    textMuted: "#98A0AC",
+    accent: "#F7931A",
+    accentPressed: "#DF7F0B",
+    onAccent: "#14100A",
+    success: "#4ADE80",
+    danger: "#F87171",
+    dangerPressed: "#EF5350",
+    link: "#F7931A",
+    overlay: "rgba(0,0,0,0.6)",
+} as const;
 
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
+
+export const radius = { input: 10, button: 12, card: 16 } as const;
+
+export const fonts = {
+    heading: "SpaceGrotesk_600SemiBold",
+    headingBold: "SpaceGrotesk_700Bold",
+    button: "SpaceGrotesk_500Medium",
+    mono: "JetBrainsMono_400Regular",
+} as const;
+
+export const type = {
+    title: { fontSize: 24, lineHeight: 30, fontFamily: fonts.headingBold, color: colors.text },
+    heading: { fontSize: 17, lineHeight: 22, fontFamily: fonts.heading, color: colors.text },
+    body: { fontSize: 15, lineHeight: 21, color: colors.text },
+    caption: { fontSize: 13, lineHeight: 18, color: colors.textMuted },
+    mono: { fontSize: 13, lineHeight: 19, fontFamily: fonts.mono, color: colors.text },
+} as const;
+
+export const navTheme: Theme = {
+    ...DarkTheme,
+    colors: {
+        ...DarkTheme.colors,
+        primary: colors.accent,
+        background: colors.bg,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.accent,
+    },
 };
-
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});

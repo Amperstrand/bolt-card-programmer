@@ -1,12 +1,10 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { Button, ScrollView, StyleSheet, Text } from "react-native";
-import Dialog from "react-native-dialog";
+import { Text } from "react-native";
 import NfcManager, { Ndef, NfcTech } from "react-native-nfc-manager";
-import { Card, Title } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
+
+import { AppDialog, AppTextInput, Button, Card, MonoField, NfcPulse, Screen, StatusRow } from "@/components/ui";
+import { type } from "@/constants/theme";
 import Ntag424 from "../class/NTag424";
 import DisplayAuthInfo from "../components/DisplayAuthInfo";
 import parseBoltcardUrl from "../utils/parseBoltcardUrl";
@@ -19,7 +17,6 @@ export default function CreateBoltcardScreen() {
     // The camera/deeplink path is unwrapped by expo-router (app/program.tsx), but
     // the in-app scanner passes the raw scanned string straight through.
     const data = result ? parseBoltcardUrl(result.toString()) : null;
-    const navigation = useNavigation();
 
     const [promptVisible, setPromptVisible] = useState(false);
     const [pasteUrlValue, setPasteUrlValue] = useState();
@@ -193,53 +190,48 @@ export default function CreateBoltcardScreen() {
         }
     };
 
-    const showTickOrError = (good) => {
-        return good ? (
-            <Ionicons name="checkmark-circle" size={20} color="green" />
-        ) : (
-            <Ionicons name="alert-circle" size={20} color="red" />
-        );
-    };
-
     return (
-        <SafeAreaView>
-            <ScrollView>
-                {!data || data == null ? (
-                    <>
-                        <Card style={styles.card}>
-                            <Card.Content>
-                                <Title>Scan QR Code</Title>
-                                <Text>
-                                    Press the create card on LNBits or run the ./createboltcard command on your boltcard
-                                    server
-                                </Text>
-                            </Card.Content>
-                            <Card.Actions style={{ justifyContent: "space-around" }}>
-                                <Button onPress={scanQRCode} title="Scan QR Code" />
-                                <Button onPress={() => setPromptVisible(true)} title="Paste Auth URL" />
-                            </Card.Actions>
-                        </Card>
-                        <Dialog.Container visible={promptVisible}>
-                            <Dialog.Title style={styles.textBlack}>Enter Auth URL</Dialog.Title>
-                            <Dialog.Description>
-                                Paste your Auth URL from the console here to import the keys.
-                            </Dialog.Description>
-                            <Dialog.Input
-                                style={styles.textBlack}
-                                label="Auth URL"
-                                onChangeText={setPasteUrlValue}
-                                value={pasteUrlValue}
-                            />
-                            <Dialog.Button
-                                label="Cancel"
-                                onPress={() => {
+        <Screen>
+            {!data || data == null ? (
+                <>
+                    <Card
+                        title="Scan QR Code"
+                        footer={
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    title="Paste Auth URL"
+                                    icon="clipboard-outline"
+                                    onPress={() => setPromptVisible(true)}
+                                />
+                                <Button title="Scan QR Code" icon="qr-code" onPress={scanQRCode} />
+                            </>
+                        }
+                    >
+                        <Text style={type.body}>
+                            Press the create card button on LNbits, or run the ./createboltcard command on your boltcard
+                            server.
+                        </Text>
+                    </Card>
+                    <AppDialog
+                        visible={promptVisible}
+                        title="Enter Auth URL"
+                        onRequestClose={() => {
+                            setPromptVisible(false);
+                            setPasteUrlValue();
+                        }}
+                        actions={[
+                            {
+                                label: "Cancel",
+                                onPress: () => {
                                     setPromptVisible(false);
                                     setPasteUrlValue();
-                                }}
-                            />
-                            <Dialog.Button
-                                label="Continue"
-                                onPress={() => {
+                                },
+                            },
+                            {
+                                label: "Continue",
+                                variant: "primary",
+                                onPress: () => {
                                     setPromptVisible(false);
                                     setPasteUrlValue();
                                     router.replace({
@@ -250,130 +242,104 @@ export default function CreateBoltcardScreen() {
                                             timestamp: Date.now(),
                                         },
                                     });
-                                }}
-                            />
-                        </Dialog.Container>
-                    </>
-                ) : (
-                    <Card style={styles.card}>
-                        <Card.Content>
-                            <Title>Check URLs and Keys</Title>
-                            <DisplayAuthInfo
-                                data={data}
-                                keys={keys}
-                                setKeys={setKeys}
-                                lnurlw_base={lnurlw_base}
-                                setlnurlw_base={setlnurlw_base}
-                                setReadyToWrite={setReadyToWrite}
-                                cardName={cardName}
-                                setCardName={setCardName}
-                                privateUID={privateUID}
-                                setPrivateUID={setPrivateUID}
-                            />
-                        </Card.Content>
-                        <Card.Actions style={{ justifyContent: "space-around" }}>
-                            <Button title="Reset" color="red" onPress={resetAll} />
+                                },
+                            },
+                        ]}
+                    >
+                        <Text style={type.caption}>
+                            Paste your Auth URL from the console here to import the keys.
+                        </Text>
+                        <AppTextInput
+                            mono
+                            label="Auth URL"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            onChangeText={setPasteUrlValue}
+                            value={pasteUrlValue}
+                        />
+                    </AppDialog>
+                </>
+            ) : (
+                <Card
+                    title="Check URLs and Keys"
+                    footer={
+                        <>
+                            <Button variant="destructive" title="Reset" onPress={resetAll} />
                             {readyToWrite && !writeMode && <Button title="Write Card Now" onPress={writeAgain} />}
-                        </Card.Actions>
-                    </Card>
-                )}
+                        </>
+                    }
+                >
+                    <DisplayAuthInfo
+                        data={data}
+                        keys={keys}
+                        setKeys={setKeys}
+                        lnurlw_base={lnurlw_base}
+                        setlnurlw_base={setlnurlw_base}
+                        setReadyToWrite={setReadyToWrite}
+                        cardName={cardName}
+                        setCardName={setCardName}
+                        privateUID={privateUID}
+                        setPrivateUID={setPrivateUID}
+                    />
+                </Card>
+            )}
 
-                {writeMode && (
-                    <Card style={styles.card}>
-                        <Card.Content>
-                            <Ionicons name="card" size={50} color="green" />
-                            <Text style={{ fontSize: 20, textAlign: "center", borderColor: "black" }}>
-                                Ready to write card. Hold NFC card to phone until all keys are changed.
-                            </Text>
-                        </Card.Content>
-                        <Card.Actions style={{ justifyContent: "center" }}>
-                            <Button
-                                title="Cancel"
-                                color="red"
-                                onPress={() => {
-                                    NfcManager.cancelTechnologyRequest();
-                                    setWriteMode(false);
-                                    setReadyToWrite(true);
-                                }}
-                            />
-                        </Card.Actions>
-                    </Card>
-                )}
-                {(cardUID || tagTypeError) && (
-                    <Card style={styles.card}>
-                        <Card.Content>
-                            <Title>Output</Title>
-                            {tagTypeError && (
-                                <Text>
-                                    Tag Type Error: {tagTypeError}
-                                    <Ionicons name="alert-circle" size={20} color="red" />
-                                </Text>
-                            )}
-                            {cardUID && (
-                                <Text>
-                                    Card UID: {cardUID}
-                                    <Ionicons name="checkmark-circle" size={20} color="green" />
-                                </Text>
-                            )}
-                            {tagname && (
-                                <Text style={{ lineHeight: 30, textAlignVertical: "center" }}>
-                                    Tag: {tagname}
-                                    <Ionicons name="checkmark-circle" size={20} color="green" />
-                                </Text>
-                            )}
-                            {ndefWritten && (
-                                <Text>
-                                    NDEF written: {ndefWritten}
-                                    {showTickOrError(ndefWritten == "success")}
-                                </Text>
-                            )}
-                            {writekeys && (
-                                <Text>
-                                    Keys Changed: {writekeys}
-                                    {showTickOrError(writekeys == "success")}
-                                </Text>
-                            )}
-                            {ndefRead && <Text>Read NDEF: {ndefRead}</Text>}
-                            {testp && (
-                                <Text>
-                                    Test PICC:{" "}
-                                    {cardUID && cardUID.length == 8 ? (
-                                        <>test skipped {showTickOrError(true)}</>
-                                    ) : (
-                                        <>
-                                            {testp}
-                                            {showTickOrError(testp == "ok")}
-                                        </>
-                                    )}
-                                </Text>
-                            )}
-                            {testc && (
-                                <Text>
-                                    Test CMAC: {testc}
-                                    {showTickOrError(testc == "ok")}
-                                </Text>
-                            )}
-                            {testBolt && (
-                                <Text>
-                                    Bolt call test: {testBolt}
-                                    {showTickOrError(testBolt == "success")}
-                                </Text>
-                            )}
-                        </Card.Content>
-                        <Card.Actions style={{ justifyContent: "space-around" }}>
-                            <Button title="Write Again" onPress={writeAgain} />
-                        </Card.Actions>
-                    </Card>
-                )}
-            </ScrollView>
-        </SafeAreaView>
+            {writeMode && (
+                <Card
+                    centered
+                    footer={
+                        <Button
+                            variant="ghost"
+                            title="Cancel"
+                            onPress={() => {
+                                NfcManager.cancelTechnologyRequest();
+                                setWriteMode(false);
+                                setReadyToWrite(true);
+                            }}
+                        />
+                    }
+                >
+                    <NfcPulse label="Hold NFC card to phone" sublabel="Keep holding until all keys are written" />
+                </Card>
+            )}
+            {(cardUID || tagTypeError) && (
+                <Card title="Output" footer={<Button title="Write Again" onPress={writeAgain} />}>
+                    {tagTypeError ? <StatusRow status="error" label="Tag Type Error" detail={tagTypeError} /> : null}
+                    {cardUID ? <MonoField label="Card UID" value={cardUID} /> : null}
+                    {tagname ? <StatusRow status="success" label={`Tag: ${tagname}`} /> : null}
+                    {ndefWritten ? (
+                        <StatusRow
+                            status={ndefWritten == "success" ? "success" : "error"}
+                            label="NDEF written"
+                            detail={ndefWritten == "success" ? undefined : ndefWritten}
+                        />
+                    ) : null}
+                    {writekeys ? (
+                        <StatusRow
+                            status={writekeys == "success" ? "success" : "error"}
+                            label="Keys changed"
+                            detail={writekeys == "success" ? undefined : writekeys}
+                        />
+                    ) : null}
+                    {ndefRead ? <MonoField label="Read NDEF" value={ndefRead} /> : null}
+                    {testp ? (
+                        cardUID && cardUID.length == 8 ? (
+                            <StatusRow status="success" label="Test PICC: test skipped" />
+                        ) : (
+                            <StatusRow status={testp == "ok" ? "success" : "error"} label={`Test PICC: ${testp}`} />
+                        )
+                    ) : null}
+                    {testc ? (
+                        <StatusRow status={testc == "ok" ? "success" : "error"} label={`Test CMAC: ${testc}`} />
+                    ) : null}
+                    {testBolt ? (
+                        <StatusRow
+                            status={testBolt == "success" ? "success" : "error"}
+                            label={`Bolt call test: ${testBolt}`}
+                        />
+                    ) : null}
+                </Card>
+            )}
+        </Screen>
     );
 }
-const styles = StyleSheet.create({
-    card: {
-        margin: 20,
-    },
-    textBlack: {
-        color: "#000",
-    },
-});
