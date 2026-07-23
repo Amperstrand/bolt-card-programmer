@@ -1,6 +1,14 @@
 {
     "versions": [
         {
+            "version": "0.7.0",
+            "date": "2026-07-23",
+            "features": [
+                "Wipe/reset: the boltcard://reset deeplink now reliably opens the card-reset flow (hub v0.23.x, per DEEPLINK.md)",
+                "Show a clear \"card already reset\" message when resetting a blank card"
+            ]
+        },
+        {
             "version": "0.6.3",
             "date": "2026-07-22",
             "features": [

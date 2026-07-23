@@ -31,7 +31,7 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="reset"
+                name="reset-keys"
                 options={{
                     title: "Reset",
                     tabBarIcon: ({ color }) => <Ionicons size={24} name="refresh" color={color} />,

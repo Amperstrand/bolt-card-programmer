@@ -120,7 +120,7 @@ export default function ResetKeysScreen() {
     const scanQRCode = () => {
         router.push({
             pathname: "/scan",
-            params: { redirect: "/(tabs)/reset" },
+            params: { redirect: "/(tabs)/reset-keys" },
         });
     };
 
@@ -183,7 +183,7 @@ export default function ResetKeysScreen() {
                             setPromptVisible(false);
                             setPasteWipeKeysJSON();
                             router.replace({
-                                pathname: "/(tabs)/reset",
+                                pathname: "/(tabs)/reset-keys",
                                 params: {
                                     // the useEffect above reads `params.result`
                                     result: pasteWipeKeysJSON,
