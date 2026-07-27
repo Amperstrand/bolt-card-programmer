@@ -197,7 +197,8 @@ export default function SetupBoltcard({ url }: any) {
             fetch(httpsLNURL)
                 .then((response) => {
                     if (!response.ok) {
-                        throw new Error(response.statusText);
+                        // statusText is commonly blank on React Native, so lead with the code.
+                        throw new Error(`Server returned ${response.status} ${response.statusText}`.trim());
                     }
                     return response.json();
                 })
