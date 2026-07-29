@@ -2,9 +2,11 @@
     "versions": [
         {
             "version": "0.6.3",
-            "date": "2026-07-22",
+            "date": "2026-07-29",
             "features": [
-                "improved UI/UX include get started options"
+                "improved UI/UX include get started options",
+                "fix: Create tab auth URL fetch now falls back to GET when POST fails, restoring LNbits compatibility",
+                "bugfix for LNBits boltcard implementation"
             ]
         },
         {

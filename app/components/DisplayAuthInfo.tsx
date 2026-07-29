@@ -31,7 +31,9 @@ export default function DisplayAuthInfo(props: any) {
                 // Bolt Card Hub endpoints (e.g. /batch?s=...) serve the keys over POST
                 // and return an empty body (HTTP 405) for GET, which used to surface as
                 // a cryptic "JSON Parse error: Unexpected end of input". POST first, then
-                // fall back to GET for legacy auth endpoints that only accept GET.
+                // fall back to GET on any non-ok status: LNbits accepts POST on /auth
+                // but expects a UID in the body (400 "Missing UID" for our empty {}),
+                // while its GET /auth?a=... serves the keys.
                 let response = await fetch(data, {
                     method: "POST",
                     headers: {
@@ -40,7 +42,7 @@ export default function DisplayAuthInfo(props: any) {
                     },
                     body: "{}",
                 });
-                if (response.status === 404 || response.status === 405) {
+                if (!response.ok) {
                     response = await fetch(data, {
                         method: "GET",
                         headers: { Accept: "application/json" },

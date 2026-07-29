@@ -19,7 +19,7 @@ export default function defineConfig({ config }: ConfigContext): ExpoConfig {
             bundleIdentifier: "com.lightningnfcapp",
         },
         android: {
-            versionCode: 1784678691,
+            versionCode: 1785289046,
             package: "com.lightningnfcapp",
             adaptiveIcon: {
                 backgroundColor: "#E6F4FE",
