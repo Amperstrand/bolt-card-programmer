@@ -72,6 +72,13 @@ export default function SetupBoltcard({ url }: any) {
             if (!tag) throw new Error("Error reading card. No tag detected");
             const uid = tag?.id;
 
+            // DEEPLINK.md "Reset action" step 1: if the lnurlw NDEF can't be read the
+            // card is already reset — surface a clear message rather than a generic
+            // NFC error from decoding a missing record below.
+            if (!tag.ndefMessage || !tag.ndefMessage[0]) {
+                throw new Error("YOUR CARD IS ALREADY RESET!");
+            }
+
             const ndefMessage = Ndef.uri.decodePayload(tag.ndefMessage[0].payload);
 
             await Ntag424.isoSelectFileApplication();

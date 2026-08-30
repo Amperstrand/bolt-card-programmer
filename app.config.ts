@@ -7,7 +7,7 @@ export default function defineConfig({ config }: ConfigContext): ExpoConfig {
         ...config,
         name: "bolt-card-programmer",
         slug: "bolt-card-programmer",
-        version: "0.6.2",
+        version: "0.7.0",
         orientation: "portrait",
         icon: "./assets/images/icon.png",
         scheme: "boltcardprogrammer",
