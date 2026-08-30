@@ -24,6 +24,10 @@ export default function DisplayAuthInfo(props: any) {
     useEffect(() => {
         if (!data || data == "") return;
 
+        // Guards against a slow response for a previous URL landing after the user
+        // has reset and pasted a new one, which would stage the wrong keys to write.
+        let cancelled = false;
+
         const loadAuthInfo = async () => {
             setLoading(true);
             setError(undefined);
@@ -31,7 +35,9 @@ export default function DisplayAuthInfo(props: any) {
                 // Bolt Card Hub endpoints (e.g. /batch?s=...) serve the keys over POST
                 // and return an empty body (HTTP 405) for GET, which used to surface as
                 // a cryptic "JSON Parse error: Unexpected end of input". POST first, then
-                // fall back to GET for legacy auth endpoints that only accept GET.
+                // fall back to GET on any non-ok status: LNbits accepts POST on /auth
+                // but expects a UID in the body (400 "Missing UID" for our empty {}),
+                // while its GET /auth?a=... serves the keys.
                 let response = await fetch(data, {
                     method: "POST",
                     headers: {
@@ -40,32 +46,46 @@ export default function DisplayAuthInfo(props: any) {
                     },
                     body: "{}",
                 });
-                if (response.status === 404 || response.status === 405) {
+                if (!response.ok) {
                     response = await fetch(data, {
                         method: "GET",
                         headers: { Accept: "application/json" },
                     });
                 }
 
-                if (!response.ok) {
-                    throw new Error(`Server returned ${response.status} ${response.statusText}`.trim());
+                // Read the body before checking the status: hubs report their failure
+                // detail as {status:"ERROR", reason:"..."} and may pair it with a 4xx,
+                // so rejecting on the status first would discard the only useful message.
+                const body = (await response.text()).trim();
+
+                let json;
+                if (body) {
+                    try {
+                        json = JSON.parse(body);
+                    } catch {
+                        json = undefined;
+                    }
                 }
 
-                const body = (await response.text()).trim();
+                if (cancelled) return;
+
+                const statusMessage = `Server returned ${response.status} ${response.statusText}`.trim();
+
+                if (json && json.status == "ERROR") {
+                    setError(json.reason || statusMessage);
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(statusMessage);
+                }
+
                 if (!body) {
                     throw new Error("Server returned an empty response");
                 }
 
-                let json;
-                try {
-                    json = JSON.parse(body);
-                } catch {
+                if (!json) {
                     throw new Error("Server response was not valid JSON");
-                }
-
-                if (json.status == "ERROR") {
-                    setError(json.reason);
-                    return;
                 }
 
                 // Accept both the Bolt Card Hub uppercase schema (LNURLW, K0..K4) and the
@@ -78,7 +98,7 @@ export default function DisplayAuthInfo(props: any) {
                 const k4 = json.K4 || json.k4;
 
                 if (!(lnurlw && k0 && k1 && k2 && k3 && k4)) {
-                    setError("The JSON response must contain lnurlw_base, k0, k1, k2, k3, k4 ");
+                    setError("The JSON response must contain LNURLW and K0-K4 (or lnurlw_base and k0-k4)");
                     return;
                 }
 
@@ -90,13 +110,17 @@ export default function DisplayAuthInfo(props: any) {
                 setReadyToWrite(true);
             } catch (error: any) {
                 console.error(error);
-                setError(error.message);
+                if (!cancelled) setError(error.message);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         loadAuthInfo();
+
+        return () => {
+            cancelled = true;
+        };
     }, [data]);
 
     const key0display = keys[0] ? keys[0].substring(0, 4) + "............" + keys[0].substring(28) : "pending...";
