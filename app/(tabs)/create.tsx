@@ -6,6 +6,7 @@ import NfcManager, { Ndef, NfcTech } from "react-native-nfc-manager";
 import { AppDialog, AppTextInput, Button, Card, MonoField, NfcPulse, Screen, StatusRow } from "@/components/ui";
 import { type } from "@/constants/theme";
 import Ntag424 from "../class/NTag424";
+import { buildSdmUrl, sdmMirrorOffsets } from "../class/sdm";
 import DisplayAuthInfo from "../components/DisplayAuthInfo";
 import parseBoltcardUrl from "../utils/parseBoltcardUrl";
 
@@ -90,9 +91,7 @@ export default function CreateBoltcardScreen() {
             });
 
             //set ndef
-            const ndefMessage = lnurlw_base.includes("?")
-                ? lnurlw_base + "&p=00000000000000000000000000000000&c=0000000000000000"
-                : lnurlw_base + "?p=00000000000000000000000000000000&c=0000000000000000";
+            const { ndefMessage, suffix } = buildSdmUrl(lnurlw_base);
 
             const message = [Ndef.uriRecord(ndefMessage)];
             const bytes = Ndef.encodeMessage(message);
@@ -107,8 +106,7 @@ export default function CreateBoltcardScreen() {
             if (privateUID) {
                 await Ntag424.setPrivateUid();
             }
-            const piccOffset = ndefMessage.indexOf("p=") + 9;
-            const macOffset = ndefMessage.indexOf("c=") + 9;
+            const { piccOffset, macOffset } = sdmMirrorOffsets(bytes, suffix);
             //change file settings
             await Ntag424.setBoltCardFileSettings(piccOffset, macOffset);
             //get uid

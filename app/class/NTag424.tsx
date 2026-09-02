@@ -350,9 +350,10 @@ Ntag424.setBoltCardFileSettings = (piccOffset: any, macOffset: any) => {
     cmdData += "FF12";
     //ENCPICCDataOffset
     cmdData += piccOffset.toString(16).padEnd(6, "0");
-    //SDMMACOffset
-    cmdData += macOffset.toString(16).padEnd(6, "0");
     //SDMMACInputOffset
+    //NT4H2421Gx §10.7.1 Fig 22 order: PICCDataOffset, SDMMACInputOffset, SDMMACOffset
+    cmdData += macOffset.toString(16).padEnd(6, "0");
+    //SDMMACOffset
     cmdData += macOffset.toString(16).padEnd(6, "0");
     return Ntag424.changeFileSettings(cmdData);
 };

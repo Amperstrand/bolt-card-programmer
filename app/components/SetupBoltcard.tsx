@@ -6,6 +6,7 @@ import nfcManager, { Ndef, NfcTech } from "react-native-nfc-manager";
 import { Button, Card, MonoField, NfcPulse, SectionTitle, StatusRow } from "@/components/ui";
 import { colors, spacing, type } from "@/constants/theme";
 import Ntag424 from "../class/NTag424";
+import { buildSdmUrl, sdmMirrorOffsets } from "../class/sdm";
 
 const SetupStep = {
     Init: 1,
@@ -144,9 +145,7 @@ export default function SetupBoltcard({ url }: any) {
             setWritingCard(true);
             setStep(SetupStep.WritingCard);
             //set ndef
-            const ndefMessage = lnurlw_base.includes("?")
-                ? lnurlw_base + "&p=00000000000000000000000000000000&c=0000000000000000"
-                : lnurlw_base + "?p=00000000000000000000000000000000&c=0000000000000000";
+            const { ndefMessage, suffix } = buildSdmUrl(lnurlw_base);
 
             const message = [Ndef.uriRecord(ndefMessage)];
             const bytes = Ndef.encodeMessage(message);
@@ -160,8 +159,7 @@ export default function SetupBoltcard({ url }: any) {
                 await Ntag424.setPrivateUid();
                 setUidPrivacyEnabled(true);
             }
-            const piccOffset = ndefMessage.indexOf("p=") + 9;
-            const macOffset = ndefMessage.indexOf("c=") + 9;
+            const { piccOffset, macOffset } = sdmMirrorOffsets(bytes, suffix);
             //change file settings
             await Ntag424.setBoltCardFileSettings(piccOffset, macOffset);
             //change keys
