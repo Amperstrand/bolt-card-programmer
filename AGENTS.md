@@ -270,3 +270,25 @@ These improvements were identified from a three-way comparison against BTCPaySer
   - `src/bolty.ino` — Main Arduino sketch
   - `src/gui.h` — Display/UI layer
   - `src/hardware_config.h` — Pin definitions and board selection
+
+## Boltcard line canon (cross-repo)
+
+This app is the **write path** of the six-repo boltcard line (it writes
+the keys + NDEF + SDM configuration that the worker's read path then
+verifies). The canonical line doctrine — repo map, SUN read-path
+architecture, the vectors-as-oracle conformance rule, bench touchpoints,
+lane-B1 cross-references — lives in
+[ntag424-vectors/AGENTS.md](https://github.com/Amperstrand/ntag424-vectors/blob/main/AGENTS.md).
+
+Two rules from it bind this repo directly:
+
+- **One key derivation, decided by vectors.** The keys this app fetches
+  and writes must be the deterministic-derivation keys the worker's
+  `keygenerator` computes; disagreements go to the canonical vectors,
+  never resolved by changing one side.
+- **Provenance beats votes** — including in examples: docs and test cards
+  carry only synthetic/public key material (the `0000…0001` dev
+  fallback); production keys never enter the repo.
+
+The legacy Android app (bolt-nfc-android-app fork) is the predecessor
+lineage; new provisioning features land here, not there.
