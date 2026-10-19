@@ -10,7 +10,8 @@
         "web": "expo start --web",
         "lint": "expo lint",
         "postinstall": "rn-nodeify --install buffer --hack",
-        "test": "vitest run"
+        "test": "vitest run",
+        "vectors:check": "node scripts/vectors-check.mjs"
     },
     "dependencies": {
         "@expo/vector-icons": "^15.0.3",
@@ -56,7 +57,7 @@
         "eslint-config-expo": "~10.0.0",
         "tsx": "^4.20.6",
         "typescript": "~5.9.2",
-        "vitest": "^5.0.5"
+        "vitest": "^3.2.4"
     },
     "private": true
 }

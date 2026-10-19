@@ -17,6 +17,7 @@ Tab-based navigation using expo-router (`app/(tabs)/`).
 | `app/components/ResetBoltcard.tsx` | URL-driven wipe flow (server fetches keys) |
 | `app/class/NTag424.tsx` | NTAG424 DNA command layer — auth, changeKey, file settings, NDEF |
 | `app/utils/Cmac.tsx` | Vendored AES-CMAC (MIT, crypto-es based) — do not modify lightly |
+| `app/utils/sunVerify.ts` | Pure SUN (p=/c=) verification core — extracted from `Ntag424.testPAndC`; exercised off-device by the conformance suite |
 | `app/constants/ErrorCodes.tsx` | APDU error code maps |
 | `app/scan/index.tsx` | QR code scanner screen |
 
@@ -292,3 +293,18 @@ Two rules from it bind this repo directly:
 
 The legacy Android app (bolt-nfc-android-app fork) is the predecessor
 lineage; new provisioning features land here, not there.
+
+### Conformance suite (ntag424-vectors)
+
+`npm test` runs the vendored ntag424-vectors oracle suite
+(`tests/ntag424Vectors.test.ts`; reference-locked by sha256 in
+`tests/conformance/ntag424-vectors/LOCK`). Every vector this app's crypto
+surface can express must pass: `aes_cmac` (the vendored AES-CMAC),
+`sv2_build`, `picc_decrypt`, `sun_mac`, and the full `sdm_full` chain
+(positive + negative) via `app/utils/sunVerify.ts` — the extracted
+`testPAndC` core, so the suite exercises the app's real verification path,
+not a re-implementation. `derive_keys` vectors are skipped aloud (26 of
+46): K0–K4 arrive from the auth server (`SetupBoltcard.tsx`), the app
+never derives keys on-device. Vendored-copy drift guard:
+`npm run vectors:check` (also asserted inside the suite).
+
